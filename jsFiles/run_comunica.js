@@ -1,5 +1,18 @@
 // import {LoggerTimer} from "@comunica/logger-timer";
 // import {QueryEngineFactory} from "@comunica/query-sparql";
+// const fs = require('fs');
+// const http = require('http');
+// const path = require('path');
+const options = {
+    hostname: 'localhost',
+    port: 3000,
+    path: '/sparql',
+    method: 'POST',
+    headers: {
+        'Accept': 'table',
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+};
 class queryTester {
     constructor() {
         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
@@ -44,8 +57,8 @@ class queryTesterTest {
 }
 class trainComunicaModel {
     constructor() {
-        const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-        this.engine = new QueryEngine();
+        // const QueryEngine = require('@comunica/query-sparql').QueryEngine;
+        // this.engine = new QueryEngine();
         this.queries = [];
     }
     async executeQuery(query, sources) {
@@ -81,12 +94,30 @@ class trainComunicaModel {
 // let testSources: string[] = ['http://fragments.dbpedia.org/2015/en','https://www.rubensworks.net','https://ruben.verborgh.org/profile/']
 // let tester = new queryTester();
 // let timeSpent: number  = tester.timedQueryExecution(testQuery2, testSources);
+function call(query) {
+    const req = http.request(options, res => {
+    });
+    req.write('query=' + query);
+    req.end();
+}
+function stopCount(hrstart) {
+    // execution time simulated with setTimeout function
+    let hrend = process.hrtime(hrstart);
+    return hrend[0] * 1000 + hrend[1] / 1000000;
+}
 let trainer = new trainComunicaModel();
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
 loadingComplete.then(result => {
-    const cleanedQueries = trainer.queries[0].replace(/\n/g, '').replace(/\t/g, '').split('SELECT');
-    cleanedQueries.shift();
-    const stream = trainer.executeQuery('SELECT' + cleanedQueries[0], ['http://db.uwaterloo.ca']);
-    // console.log(stream);
+    const cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
+    for (let i = 0; i < cleanedQueries.length; i++) {
+        const querySubset = cleanedQueries[i];
+        querySubset.shift();
+        for (let j = 0; j < querySubset.length; j++) {
+            call('SELECT' + querySubset[j]);
+            break;
+        }
+        break;
+    }
+    // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 });
 //# sourceMappingURL=run_comunica.js.map
