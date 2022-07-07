@@ -1,8 +1,8 @@
 // import {LoggerTimer} from "@comunica/logger-timer";
 // import {QueryEngineFactory} from "@comunica/query-sparql";
-// const fs = require('fs');
-// const http = require('http');
-// const path = require('path');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
 const options = {
     hostname: 'localhost',
     port: 3000,
@@ -13,57 +13,65 @@ const options = {
         'Content-Type': 'application/x-www-form-urlencoded',
     }
 };
-class queryTester {
-    constructor() {
-        const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-        // const QueryEngineFactory = require('@comunica/query-sparql').QueryEngineFactory;
-        // const timer = require('@comunica/logger-timer').LoggerTimer;
-        // console.log(timer);
-        // const myEngine = new QueryEngineFactory().create({
-        //     configPath: __dirname+"/config.json", // Relative or absolute path 
-        // });
-        this.myEngine = new QueryEngine();
-    }
-    async queryComunica(query, sources) {
-        /* Timing the command is still wrong */
-        this.myEngine = await this.myEngine;
-        const bindingsStream = await this.myEngine.query(query, { sources: sources });
-        return bindingsStream;
-    }
-    timedQueryExecution(query, sources) {
-        const start = performance.now();
-        const bindingResult = this.queryComunica(query, sources);
-        let elapsed = performance.now() - start;
-        return elapsed;
-    }
-}
-class queryTesterTest {
-    constructor() {
-        const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-        this.myEngine = new QueryEngine();
-    }
-    async queryComunica(query, sources) {
-        /* Timing the command is still wrong */
-        this.myEngine = await this.myEngine;
-        const bindingsStream = await this.myEngine.query(query, { sources: sources });
-        return bindingsStream;
-    }
-    timedQueryExecution(query, sources) {
-        const start = performance.now();
-        const bindingResult = this.queryComunica(query, sources);
-        let elapsed = performance.now() - start;
-        return elapsed;
-    }
-}
+// class queryTester {
+//     myEngine: any;
+//     timer: any;
+//     logger: any;
+//     constructor(){
+//         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
+//         // const QueryEngineFactory = require('@comunica/query-sparql').QueryEngineFactory;
+//         // const timer = require('@comunica/logger-timer').LoggerTimer;
+//         // console.log(timer);
+//         const myEngine = new QueryEngine().create({
+//             configPath: __dirname+"/config.json", // Relative or absolute path 
+//         });
+//         this.myEngine = new QueryEngine();
+//     }
+//     async queryComunica(query: string, sources:string[]) {
+//         /* Timing the command is still wrong */
+//         this.myEngine = await this.myEngine;
+//         const bindingsStream = await this.myEngine.query(query, {sources: sources});
+//         return bindingsStream;
+//     }
+//     timedQueryExecution(query: string, sources: string[]){
+//         const start: number = performance.now();
+//         const bindingResult = this.queryComunica(query, sources);
+//         let elapsed: number = performance.now() - start;
+//         return elapsed;
+//     }
+// }
+// class queryTesterTest {
+//     myEngine: any;
+//     timer: any;
+//     constructor(){
+//         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
+//         this.myEngine = new QueryEngine();
+//     }
+//     async queryComunica(query: string, sources:string[]) {
+//         /* Timing the command is still wrong */
+//         this.myEngine = await this.myEngine;
+//         console.log(this.myEngine);
+//         const bindingsStream = await this.myEngine.query(query, {sources: sources});
+//         return bindingsStream;
+//     }
+//     timedQueryExecution(query: string, sources: string[]){
+//         const start: number = performance.now();
+//         const bindingResult = this.queryComunica(query, sources);
+//         let elapsed: number = performance.now() - start;
+//         return elapsed;
+//     }
+// }
 class trainComunicaModel {
     constructor() {
-        // const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-        // this.engine = new QueryEngine();
+        const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
+        this.engine = new QueryEngine().create({
+            configPath: __dirname + "/config-file.json", // Relative or absolute path 
+        });
         this.queries = [];
     }
     async executeQuery(query, sources) {
         this.engine = await this.engine;
-        const bindingsStream = await this.engine.query(query, { sources: sources });
+        const bindingsStream = await this.engine.queryBindings(query, { sources: sources });
         return bindingsStream;
     }
     async loadWatDivQueries(queryDir) {
@@ -106,17 +114,35 @@ function stopCount(hrstart) {
     return hrend[0] * 1000 + hrend[1] / 1000000;
 }
 let trainer = new trainComunicaModel();
+// const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
+// loadingComplete.then( result => {
+//     const cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
+//     for (let i = 0; i<cleanedQueries.length; i++){
+//         const querySubset: string[] = cleanedQueries[i];
+//         querySubset.shift();
+//         for (let j = 0; j <querySubset.length; j++){
+//             call('SELECT' + querySubset[j]);
+//             break;
+//         }
+//         break;
+//     }
+//     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
+// }
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
-loadingComplete.then(result => {
+loadingComplete.then(async (result) => {
     const cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
+    // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
     for (let i = 0; i < cleanedQueries.length; i++) {
         const querySubset = cleanedQueries[i];
         querySubset.shift();
         for (let j = 0; j < querySubset.length; j++) {
-            call('SELECT' + querySubset[j]);
-            break;
+            console.log(`Query ${j}`);
+            const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"]);
+            bindingsStream.on('data', (binding) => {
+                console.log(binding.toString()); // Quick way to print bindings for testing
+                console.log("Printed query!");
+            });
         }
-        break;
     }
     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 });
