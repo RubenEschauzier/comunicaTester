@@ -1,5 +1,9 @@
 // import {LoggerTimer} from "@comunica/logger-timer";
 // import {QueryEngineFactory} from "@comunica/query-sparql";
+
+const v8 = require('v8');
+v8.setFlagsFromString('--stack-size=4096');
+
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
@@ -168,12 +172,13 @@ loadingComplete.then( async result => {
         const querySubset: string[] = cleanedQueries[i];
         querySubset.shift();
         for (let j = 0; j <querySubset.length; j++){
-            console.log(`Query ${j}`);
+            console.log(`Query ${'SELECT' + querySubset[j]}`);
             const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"]);
-            bindingsStream.on('data', (binding) => {
-                console.log(binding.toString()); // Quick way to print bindings for testing
-                console.log("Printed query!");
-            });
+            const resultBindings = await bindingsStream.toArray();
+            console.log(resultBindings.length);
+            // await bindingsStream.on('data', (binding) => {
+            //     console.log(binding.toString()); // Quick way to print bindings for testing
+            // });
                        
         }
     
