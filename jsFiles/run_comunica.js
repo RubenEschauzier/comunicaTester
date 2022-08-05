@@ -1,7 +1,7 @@
-// import {LoggerTimer} from "@comunica/logger-timer";
-// import {QueryEngineFactory} from "@comunica/query-sparql";
-const v8 = require('v8');
-v8.setFlagsFromString('--stack-size=4096');
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// const v8 = require('v8');
+// v8.setFlagsFromString('--stack-size=4096');
 const fs = require('fs');
 const http = require('http');
 const path = require('path');
@@ -66,6 +66,9 @@ const options = {
 class trainComunicaModel {
     constructor() {
         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
+        this.modelTrainer = require('@comunica/model-trainer');
+        this.masterTree = new this.modelTrainer.MCTSMasterTree();
+        // this.masterTree = new MCTSMasterTree();
         this.engine = new QueryEngine().create({
             configPath: __dirname + "/config-file.json", // Relative or absolute path 
         });
@@ -73,8 +76,16 @@ class trainComunicaModel {
     }
     async executeQuery(query, sources) {
         this.engine = await this.engine;
-        const bindingsStream = await this.engine.queryBindings(query, { sources: sources });
+        const bindingsStream = await this.engine.queryBindings(query, { sources: sources, masterTree: this.masterTree });
         return bindingsStream;
+    }
+    async explainQuery(query, sources) {
+        const results = await this.engine.explain(query, { sources: sources, masterTree: this.masterTree });
+        return results;
+    }
+    async trainModel(masterMap) {
+        const episodeLoss = this.engine.trainModel(masterMap);
+        return await episodeLoss;
     }
     async loadWatDivQueries(queryDir) {
         const fs = require('fs');
@@ -98,18 +109,28 @@ class trainComunicaModel {
         });
         return loadingComplete;
     }
+    resetMasterTree() {
+        this.masterTree = new this.modelTrainer.MCTSMasterTree();
+    }
 }
+const nResults = [
+    0, 0, 0, 0, 4374, 4374, 0, 0, 1,
+    0, 0, 0, 0, 0, 33, 33, 3, 3,
+    1, 1, 60, 34, 0, 0, 2, 1, 13,
+    0, 0, 2, 0, 0, 0, 0, 0, 0,
+    0, 0, 2, 1
+];
 // let testQuery: string = `SELECT ?s ?p ?o WHERE {?s ?p <http://dbpedia.org/resource/Belgium>. ?s ?p ?o} LIMIT 100`;
 // let testQuery2: string = `SELECT ?s ?p ?o WHERE {?s ?p <http://dbpedia.org/resource/Belgium>. ?s ?p <http://dbpedia.org/resource/Netherlands>. ?s ?p <http://dbpedia.org/resource/England>. ?s ?p ?o} LIMIT 100`
 // let testSources: string[] = ['http://fragments.dbpedia.org/2015/en','https://www.rubensworks.net','https://ruben.verborgh.org/profile/']
 // let tester = new queryTester();
 // let timeSpent: number  = tester.timedQueryExecution(testQuery2, testSources);
-function call(query) {
-    const req = http.request(options, res => {
-    });
-    req.write('query=' + query);
-    req.end();
-}
+// function call(query: string) {
+//     const req = http.request(options, res => {
+//     });
+//     req.write('query=' + query);
+//     req.end();
+// }
 function stopCount(hrstart) {
     // execution time simulated with setTimeout function
     let hrend = process.hrtime(hrstart);
@@ -131,22 +152,37 @@ let trainer = new trainComunicaModel();
 //     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 // }
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
+const numSimulationsPerQuery = 10;
+const numEpochs = 20;
 loadingComplete.then(async (result) => {
     const cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
-    for (let i = 0; i < cleanedQueries.length; i++) {
-        const querySubset = cleanedQueries[i];
-        querySubset.shift();
-        for (let j = 0; j < querySubset.length; j++) {
-            console.log(`Query ${'SELECT' + querySubset[j]}`);
-            const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"]);
-            const resultBindings = await bindingsStream.toArray();
-            console.log(resultBindings.length);
-            // await bindingsStream.on('data', (binding) => {
-            //     console.log(binding.toString()); // Quick way to print bindings for testing
-            // });
+    // const resultArray = [];
+    const lossEpoch = [];
+    for (let epoch = 0; epoch < numEpochs; epoch++) {
+        console.log(epoch);
+        const lossEpisode = [];
+        for (let i = 0; i < cleanedQueries.length; i++) {
+            const querySubset = cleanedQueries[i];
+            querySubset.shift();
+            for (let j = 0; j < querySubset.length; j++) {
+                // console.log(`Query ${'SELECT' + querySubset[j]}`);
+                /* Execute n queries and record the results */
+                for (let n = 0; n < numSimulationsPerQuery; n++) {
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"]);
+                }
+                // const resultBindings = await bindingsStream.toArray();
+                /* Train the model using the queries*/
+                trainer.trainModel(trainer.masterTree.masterMap, lossEpisode);
+                trainer.resetMasterTree();
+                // resultArray.push(resultBindings.length);
+                // await bindingsStream.on('data', (binding) => {
+                //     console.log(binding.toString()); // Quick way to print bindings for testing
+                // });             
+            }
         }
     }
+    // console.log(resultArray);
     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 });
 //# sourceMappingURL=run_comunica.js.map

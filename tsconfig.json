@@ -1,13 +1,26 @@
 {
+  "compileOnSave": true,
   "compilerOptions": {
-    "module": "es2022",
-    "target": "es2017",
+    "module": "commonjs",
+    "lib": [
+      "es2020",
+      "es2021",
+      "dom"
+    ],
+    "target": "es2020",
+    "removeComments": false,
+    "preserveConstEnums": true,
     "sourceMap": true,
-    "types": ["node"],
-    "outDir": "jsFiles/",
-    "moduleResolution": "node",
+    "inlineSources": true,
+    "declaration": true,
+    "resolveJsonModule": true,
+    "downlevelIteration": true,
+
+    "strict": true,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "outDir": "jsFiles"
+
   },
-  "exclude": [
-    "node_modules"
-  ]
 }
