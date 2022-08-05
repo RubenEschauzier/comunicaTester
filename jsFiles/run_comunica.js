@@ -83,8 +83,8 @@ class trainComunicaModel {
         const results = await this.engine.explain(query, { sources: sources, masterTree: this.masterTree });
         return results;
     }
-    async trainModel(masterMap) {
-        const episodeLoss = this.engine.trainModel(masterMap);
+    async trainModel(masterMap, lossEpisode) {
+        const episodeLoss = this.engine.trainModel(masterMap, lossEpisode);
         return await episodeLoss;
     }
     async loadWatDivQueries(queryDir) {
@@ -160,10 +160,9 @@ loadingComplete.then(async (result) => {
     // const resultArray = [];
     const lossEpoch = [];
     for (let epoch = 0; epoch < numEpochs; epoch++) {
-        console.log(epoch);
         const lossEpisode = [];
         for (let i = 0; i < cleanedQueries.length; i++) {
-            const querySubset = cleanedQueries[i];
+            const querySubset = [...cleanedQueries[i]];
             querySubset.shift();
             for (let j = 0; j < querySubset.length; j++) {
                 // console.log(`Query ${'SELECT' + querySubset[j]}`);
@@ -181,8 +180,18 @@ loadingComplete.then(async (result) => {
                 // });             
             }
         }
+        lossEpoch.push(sum(lossEpisode) / lossEpisode.length);
+        console.log(`Epoch ${epoch}, loss: ${lossEpisode[epoch]}`);
     }
+    console.log(lossEpoch);
     // console.log(resultArray);
     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
+    function sum(arr) {
+        var result = 0, n = arr.length || 0; //may use >>> 0 to ensure length is Uint32
+        while (n--) {
+            result += +arr[n]; // unary operator to ensure ToNumber conversion
+        }
+        return result;
+    }
 });
 //# sourceMappingURL=run_comunica.js.map
