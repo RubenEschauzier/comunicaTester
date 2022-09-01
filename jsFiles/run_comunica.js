@@ -85,7 +85,7 @@ class trainComunicaModel {
     }
     async trainModel(masterMap, lossEpisode) {
         const episodeLoss = this.engine.trainModel(masterMap, lossEpisode);
-        return await episodeLoss;
+        return episodeLoss;
     }
     async loadWatDivQueries(queryDir) {
         const fs = require('fs');
@@ -152,16 +152,19 @@ let trainer = new trainComunicaModel();
 //     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 // }
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery = 10;
-const numEpochs = 20;
+const numSimulationsPerQuery = 15;
+const numEpochs = 150;
 loadingComplete.then(async (result) => {
     const cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
     // const resultArray = [];
+    // // Perform one query to index the database into comunica 
+    // const bindingsStream = await trainer.executeQuery('SELECT' + cleanedQueries[0][0], ["output/dataset.nt"]);
     const lossEpoch = [];
     for (let epoch = 0; epoch < numEpochs; epoch++) {
         const lossEpisode = [];
         for (let i = 0; i < cleanedQueries.length; i++) {
+            // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
             const querySubset = [...cleanedQueries[i]];
             querySubset.shift();
             for (let j = 0; j < querySubset.length; j++) {
@@ -172,16 +175,21 @@ loadingComplete.then(async (result) => {
                 }
                 // const resultBindings = await bindingsStream.toArray();
                 /* Train the model using the queries*/
-                trainer.trainModel(trainer.masterTree.masterMap, lossEpisode);
+                const loss = await trainer.trainModel(trainer.masterTree.masterMap, lossEpisode);
                 trainer.resetMasterTree();
+                if (loss) {
+                    lossEpisode.push(loss);
+                }
+                break;
                 // resultArray.push(resultBindings.length);
                 // await bindingsStream.on('data', (binding) => {
                 //     console.log(binding.toString()); // Quick way to print bindings for testing
                 // });             
             }
+            break;
         }
         lossEpoch.push(sum(lossEpisode) / lossEpisode.length);
-        console.log(`Epoch ${epoch}, loss: ${lossEpisode[epoch]}`);
+        console.log(`Epoch ${epoch}, loss: ${lossEpoch[epoch]}`);
     }
     console.log(lossEpoch);
     // console.log(resultArray);
