@@ -82,7 +82,7 @@ const options = {
 // }
 
 class trainComunicaModel{
-    private engine: any;
+    public engine: any;
     public queries: string[];
     public loadedQueries: Promise<boolean>;
     public modelTrainer;
@@ -99,9 +99,9 @@ class trainComunicaModel{
         this.queries = [];
     }
 
-    public async executeQuery(query: string, sources:string[]){
+    public async executeQuery(query: string, sources:string[], planHolder: Map<string, number>){
         this.engine = await this.engine;
-        const bindingsStream = await this.engine.queryBindings(query, {sources: sources, masterTree: this.masterTree});
+        const bindingsStream = await this.engine.queryBindings(query, {sources: sources, masterTree: this.masterTree, planHolder: planHolder});
         return bindingsStream
     }
 
@@ -111,8 +111,10 @@ class trainComunicaModel{
 
     }
 
-    public async trainModel(masterMap: Map<string, MCTSJoinInformation>, lossEpisode: number[]): Promise<number>{
-        const episodeLoss = this.engine.trainModel(masterMap, lossEpisode);
+    public async trainModel(masterMap: Map<string, MCTSJoinInformation>): Promise<number>{
+        // this.engine.getModelHolder().getModel().layersValue[0][0].mWeights.print() 
+        const episodeLoss = this.engine.trainModel(masterMap);
+        // this.engine.getModelHolder().getModel().denseLayerValue.getWeights()[0].print();
         return episodeLoss
     }
 
@@ -192,10 +194,41 @@ let trainer: trainComunicaModel = new trainComunicaModel();
 //     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 // }
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery: number = 15;
-const numEpochs: number = 150;
+const numSimulationsPerQuery: number = 10;
+const numEpochs: number = 25;
+const hrTime = process.hrtime();
+let numCompleted: number = 0;
 
-
+function addEndListener(beginTime: number, planMap: Map<string, number>, masterMap: Map<string, MCTSJoinInformation>, bindingStream: any, process: any){
+    const joinPlanQuery = Array.from(planMap)[planMap.size-1][0];
+    // Ensure we have our joinplan in the masterMap, this should always be true
+    if (masterMap.get(joinPlanQuery)){
+        // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
+        if (!masterMap.get(joinPlanQuery)!.actualExecutionTime || masterMap.get(joinPlanQuery)!.actualExecutionTime == 0){
+            bindingStream.on('data', (binding: any) => {
+            });
+            
+            bindingStream.on('end', () => {
+                const end: number[] = process.hrtime();
+                const endSeconds: number = end[0] + end[1] / 1000000000;
+                const elapsed: number = endSeconds-beginTime;
+                // planMap.forEach((value, key, map) => map.set(key, elapsed))
+                // Update the execution time for each joinPlan
+                planMap.forEach((value, key) => {const joinInformationPrev = masterMap.get(joinPlanQuery)! 
+                    joinInformationPrev.actualExecutionTime = elapsed;
+                    masterMap.set(joinPlanQuery, joinInformationPrev);
+                })
+                numCompleted += 1;
+            })    
+        }
+        else{
+            numCompleted += 1;
+        }    
+    }
+    else{
+        console.warn("We have joinPlan not in Mastermap!");
+    }
+}
 loadingComplete.then( async result => {
     const cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
@@ -215,15 +248,24 @@ loadingComplete.then( async result => {
                 // console.log(`Query ${'SELECT' + querySubset[j]}`);
                 /* Execute n queries and record the results */
                 for (let n = 0; n < numSimulationsPerQuery; n++){
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"]);
+                    let startTime = process.hrtime();
+                    const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
+                    const mapResults = new Map()
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
+                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                 }
                 // const resultBindings = await bindingsStream.toArray();
+                // Wait for all queries in the episode to finish 
+                // while (numCompleted < numSimulationsPerQuery){
+                //     continue;
+                // }
                 /* Train the model using the queries*/
-                const loss: number = await trainer.trainModel(trainer.masterTree.masterMap, lossEpisode);
+                const loss: number = await trainer.trainModel(trainer.masterTree.masterMap);
                 trainer.resetMasterTree();
                 if (loss){
                     lossEpisode.push(loss);
                 }
+                numCompleted = 0;
                 break;
     
                 // resultArray.push(resultBindings.length);
