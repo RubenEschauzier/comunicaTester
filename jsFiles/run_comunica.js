@@ -83,10 +83,10 @@ class trainComunicaModel {
         const results = await this.engine.explain(query, { sources: sources, masterTree: this.masterTree });
         return results;
     }
-    async trainModel(masterMap) {
-        console.log("The Weight Tensor");
-        this.engine.getModelHolder().getModel().layersValue[0][0].mWeights.print();
-        const episodeLoss = this.engine.trainModel(masterMap);
+    async trainModel(masterMap, numEntries) {
+        // this.engine.getModelHolder().getModel().layersValue[0][0].mWeights.print() 
+        this.engine = await this.engine;
+        const episodeLoss = this.engine.trainModel(masterMap, numEntries);
         // this.engine.getModelHolder().getModel().denseLayerValue.getWeights()[0].print();
         return episodeLoss;
     }
@@ -156,7 +156,7 @@ let trainer = new trainComunicaModel();
 // }
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
 const numSimulationsPerQuery = 10;
-const numEpochs = 25;
+const numEpochs = 100;
 const hrTime = process.hrtime();
 let numCompleted = 0;
 function addEndListener(beginTime, planMap, masterMap, bindingStream, process) {
@@ -210,15 +210,17 @@ loadingComplete.then(async (result) => {
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000;
                     const mapResults = new Map();
                     const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
-                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                 }
+                const numEntriesQuery = trainer.masterTree.getTotalEntries();
+                console.log(numEntriesQuery);
                 // const resultBindings = await bindingsStream.toArray();
                 // Wait for all queries in the episode to finish 
                 // while (numCompleted < numSimulationsPerQuery){
                 //     continue;
                 // }
                 /* Train the model using the queries*/
-                const loss = await trainer.trainModel(trainer.masterTree.masterMap);
+                let loss = await trainer.trainModel(trainer.masterTree.masterMap, numEntriesQuery);
                 trainer.resetMasterTree();
                 if (loss) {
                     lossEpisode.push(loss);

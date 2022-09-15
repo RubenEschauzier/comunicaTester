@@ -111,9 +111,10 @@ class trainComunicaModel{
 
     }
 
-    public async trainModel(masterMap: Map<string, MCTSJoinInformation>): Promise<number>{
+    public async trainModel(masterMap: Map<string, MCTSJoinInformation>, numEntries: number): Promise<number>{
         // this.engine.getModelHolder().getModel().layersValue[0][0].mWeights.print() 
-        const episodeLoss = this.engine.trainModel(masterMap);
+        this.engine = await this.engine;
+        const episodeLoss = this.engine.trainModel(masterMap, numEntries);
         // this.engine.getModelHolder().getModel().denseLayerValue.getWeights()[0].print();
         return episodeLoss
     }
@@ -195,7 +196,7 @@ let trainer: trainComunicaModel = new trainComunicaModel();
 // }
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
 const numSimulationsPerQuery: number = 10;
-const numEpochs: number = 25;
+const numEpochs: number = 100;
 const hrTime = process.hrtime();
 let numCompleted: number = 0;
 
@@ -252,15 +253,16 @@ loadingComplete.then( async result => {
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
                     const mapResults = new Map()
                     const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
-                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                 }
+                const numEntriesQuery: number = trainer.masterTree.getTotalEntries();
                 // const resultBindings = await bindingsStream.toArray();
                 // Wait for all queries in the episode to finish 
                 // while (numCompleted < numSimulationsPerQuery){
                 //     continue;
                 // }
                 /* Train the model using the queries*/
-                const loss: number = await trainer.trainModel(trainer.masterTree.masterMap);
+                let loss: number = await trainer.trainModel(trainer.masterTree.masterMap, numEntriesQuery);
                 trainer.resetMasterTree();
                 if (loss){
                     lossEpisode.push(loss);
