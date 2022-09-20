@@ -195,21 +195,28 @@ let trainer: trainComunicaModel = new trainComunicaModel();
 //     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 // }
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery: number = 10;
-const numEpochs: number = 100;
+const numSimulationsPerQuery: number = 5;
+const numEpochs: number = 50;
 const hrTime = process.hrtime();
 let numCompleted: number = 0;
 
 function addEndListener(beginTime: number, planMap: Map<string, number>, masterMap: Map<string, MCTSJoinInformation>, bindingStream: any, process: any){
     const joinPlanQuery = Array.from(planMap)[planMap.size-1][0];
+    let numEntriesPassed = 0;
     // Ensure we have our joinplan in the masterMap, this should always be true
     if (masterMap.get(joinPlanQuery)){
         // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
+        // console.log(masterMap.get(joinPlanQuery));
         if (!masterMap.get(joinPlanQuery)!.actualExecutionTime || masterMap.get(joinPlanQuery)!.actualExecutionTime == 0){
+            console.log("Hello are we here?");
             bindingStream.on('data', (binding: any) => {
+                console.log("No thingies");
+                numEntriesPassed += 1
+                console.log(`${numEntriesPassed}`)
             });
             
             bindingStream.on('end', () => {
+                console.log("End")
                 const end: number[] = process.hrtime();
                 const endSeconds: number = end[0] + end[1] / 1000000000;
                 const elapsed: number = endSeconds-beginTime;
@@ -219,6 +226,7 @@ function addEndListener(beginTime: number, planMap: Map<string, number>, masterM
                     joinInformationPrev.actualExecutionTime = elapsed;
                     masterMap.set(joinPlanQuery, joinInformationPrev);
                 })
+                console.log(`Elapsed time ${elapsed}`);
                 numCompleted += 1;
             })    
         }
@@ -252,8 +260,9 @@ loadingComplete.then( async result => {
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
                     const mapResults = new Map()
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
-                    addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    console.log( await bindingsStream.toArray());
+                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                 }
                 const numEntriesQuery: number = trainer.masterTree.getTotalEntries();
                 // const resultBindings = await bindingsStream.toArray();

@@ -155,19 +155,26 @@ let trainer = new trainComunicaModel();
 //     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
 // }
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery = 10;
-const numEpochs = 100;
+const numSimulationsPerQuery = 5;
+const numEpochs = 50;
 const hrTime = process.hrtime();
 let numCompleted = 0;
 function addEndListener(beginTime, planMap, masterMap, bindingStream, process) {
     const joinPlanQuery = Array.from(planMap)[planMap.size - 1][0];
+    let numEntriesPassed = 0;
     // Ensure we have our joinplan in the masterMap, this should always be true
     if (masterMap.get(joinPlanQuery)) {
         // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
+        // console.log(masterMap.get(joinPlanQuery));
         if (!masterMap.get(joinPlanQuery).actualExecutionTime || masterMap.get(joinPlanQuery).actualExecutionTime == 0) {
+            console.log("Hello are we here?");
             bindingStream.on('data', (binding) => {
+                console.log("No thingies");
+                numEntriesPassed += 1;
+                console.log(`${numEntriesPassed}`);
             });
             bindingStream.on('end', () => {
+                console.log("End");
                 const end = process.hrtime();
                 const endSeconds = end[0] + end[1] / 1000000000;
                 const elapsed = endSeconds - beginTime;
@@ -178,6 +185,7 @@ function addEndListener(beginTime, planMap, masterMap, bindingStream, process) {
                     joinInformationPrev.actualExecutionTime = elapsed;
                     masterMap.set(joinPlanQuery, joinInformationPrev);
                 });
+                console.log(`Elapsed time ${elapsed}`);
                 numCompleted += 1;
             });
         }
@@ -209,11 +217,11 @@ loadingComplete.then(async (result) => {
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000;
                     const mapResults = new Map();
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
-                    addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    console.log(await bindingsStream.toArray());
+                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                 }
                 const numEntriesQuery = trainer.masterTree.getTotalEntries();
-                console.log(numEntriesQuery);
                 // const resultBindings = await bindingsStream.toArray();
                 // Wait for all queries in the episode to finish 
                 // while (numCompleted < numSimulationsPerQuery){
@@ -226,13 +234,13 @@ loadingComplete.then(async (result) => {
                     lossEpisode.push(loss);
                 }
                 numCompleted = 0;
-                break;
+                // break;
                 // resultArray.push(resultBindings.length);
                 // await bindingsStream.on('data', (binding) => {
                 //     console.log(binding.toString()); // Quick way to print bindings for testing
                 // });             
             }
-            break;
+            // break;
         }
         lossEpoch.push(sum(lossEpisode) / lossEpisode.length);
         console.log(`Epoch ${epoch}, loss: ${lossEpoch[epoch]}`);
