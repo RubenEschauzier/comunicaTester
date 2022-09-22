@@ -1,6 +1,8 @@
 // import {LoggerTimer} from "@comunica/logger-timer";
 // import {QueryEngineFactory} from "@comunica/query-sparql";
-import {MCTSJoinInformation} from '@comunica/model-trainer'
+import {MCTSJoinInformation} from '@comunica/model-trainer';
+import { resolve } from 'path';
+import {StaticPool} from 'node-worker-threads-pool';
 // const v8 = require('v8');
 // v8.setFlagsFromString('--stack-size=4096');
 
@@ -200,44 +202,100 @@ const numEpochs: number = 50;
 const hrTime = process.hrtime();
 let numCompleted: number = 0;
 
-function addEndListener(beginTime: number, planMap: Map<string, number>, masterMap: Map<string, MCTSJoinInformation>, bindingStream: any, process: any){
-    const joinPlanQuery = Array.from(planMap)[planMap.size-1][0];
-    let numEntriesPassed = 0;
-    // Ensure we have our joinplan in the masterMap, this should always be true
-    if (masterMap.get(joinPlanQuery)){
-        // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
-        // console.log(masterMap.get(joinPlanQuery));
+
+async function executeQuery(beginTime: number, bindingStream: any, planMap: Map<string, number>, masterMap: Map<string, MCTSJoinInformation>){
+
+    let numEntriesPassed: number = 0;
+    let elapsed = 0;
+    const joinPlanQuery: string = Array.from(planMap)[planMap.size-1][0];
+    const finishedReading: Promise<boolean> = new Promise((resolve, reject) => {
+
+        bindingStream.on('data', (binding: any) => {
+            numEntriesPassed += 1
+            console.log(`${numEntriesPassed}`)
+        });
+
+        bindingStream.on('end', () => {
+            const end: number[] = process.hrtime();
+            const endSeconds: number = end[0] + end[1] / 1000000000;
+            elapsed = endSeconds-beginTime;
+
+            // Update the execution time for each joinPlan
+            planMap.forEach((value, key) => {const joinInformationPrev = masterMap.get(joinPlanQuery)! 
+                joinInformationPrev.actualExecutionTime = elapsed;
+                masterMap.set(joinPlanQuery, joinInformationPrev);
+            })
+            console.log(`Elapsed time ${elapsed}`);
+            resolve(true);
+        });
+    })
+    await finishedReading
+    return elapsed
+}
+
+function addEndListener(beginTime: number, planMap: Map<string, number>, masterMap: Map<string, MCTSJoinInformation>, bindingStream: any, process: any): Promise<boolean>{
+    const joinPlanQuery: string = Array.from(planMap)[planMap.size-1][0];
+    let numEntriesPassed: number = 0;
+    const finishedReading: Promise<boolean> = new Promise((resolve, reject) => {
         if (!masterMap.get(joinPlanQuery)!.actualExecutionTime || masterMap.get(joinPlanQuery)!.actualExecutionTime == 0){
-            console.log("Hello are we here?");
             bindingStream.on('data', (binding: any) => {
-                console.log("No thingies");
                 numEntriesPassed += 1
                 console.log(`${numEntriesPassed}`)
             });
             
             bindingStream.on('end', () => {
-                console.log("End")
                 const end: number[] = process.hrtime();
                 const endSeconds: number = end[0] + end[1] / 1000000000;
+                console.log(beginTime);
                 const elapsed: number = endSeconds-beginTime;
                 // planMap.forEach((value, key, map) => map.set(key, elapsed))
                 // Update the execution time for each joinPlan
-                planMap.forEach((value, key) => {const joinInformationPrev = masterMap.get(joinPlanQuery)! 
+                planMap.forEach((value, key) => {
+                    const joinInformationPrev = masterMap.get(key.toString())! 
                     joinInformationPrev.actualExecutionTime = elapsed;
-                    masterMap.set(joinPlanQuery, joinInformationPrev);
+                    masterMap.set(key.toString(), joinInformationPrev);
                 })
                 console.log(`Elapsed time ${elapsed}`);
+                // console.log(masterMap);
+
                 numCompleted += 1;
+                resolve(true);
             })    
-        }
-        else{
-            numCompleted += 1;
-        }    
-    }
-    else{
-        console.warn("We have joinPlan not in Mastermap!");
-    }
+    }});
+    return finishedReading;
+
+    // // Ensure we have our joinplan in the masterMap, this should always be true
+    // if (masterMap.get(joinPlanQuery)){
+    //     // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
+    //     // console.log(masterMap.get(joinPlanQuery));
+    //     if (!masterMap.get(joinPlanQuery)!.actualExecutionTime || masterMap.get(joinPlanQuery)!.actualExecutionTime == 0){
+    //         bindingStream.on('data', (binding: any) => {
+    //             numEntriesPassed += 1
+    //             console.log(`${numEntriesPassed}`)
+    //         });
+            
+    //         bindingStream.on('end', () => {
+    //             console.log("End")
+    //             const end: number[] = process.hrtime();
+    //             const endSeconds: number = end[0] + end[1] / 1000000000;
+    //             const elapsed: number = endSeconds-beginTime;
+    //             // planMap.forEach((value, key, map) => map.set(key, elapsed))
+    //             // Update the execution time for each joinPlan
+    //             planMap.forEach((value, key) => {const joinInformationPrev = masterMap.get(joinPlanQuery)! 
+    //                 joinInformationPrev.actualExecutionTime = elapsed;
+    //                 masterMap.set(joinPlanQuery, joinInformationPrev);
+    //             })
+    //             console.log(`Elapsed time ${elapsed}`);
+    //             numCompleted += 1;
+    //             finishedReading.resolve()
+    //         })    
+    //     }
+    //     else{
+    //         numCompleted += 1;
+    //     }    
+    // }
 }
+
 loadingComplete.then( async result => {
     const cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
@@ -256,15 +314,20 @@ loadingComplete.then( async result => {
             for (let j = 0; j <querySubset.length; j++){
                 // console.log(`Query ${'SELECT' + querySubset[j]}`);
                 /* Execute n queries and record the results */
+                const queryPromises: Promise<boolean>[] = [];
                 for (let n = 0; n < numSimulationsPerQuery; n++){
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
                     const mapResults = new Map()
                     const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
-                    console.log( await bindingsStream.toArray());
-                    // addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
+                    // const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
+                    // await queryPromise;
                 }
                 const numEntriesQuery: number = trainer.masterTree.getTotalEntries();
+                // Wait for all query executions to finish
+                // await Promise.all(queryPromises);
+
                 // const resultBindings = await bindingsStream.toArray();
                 // Wait for all queries in the episode to finish 
                 // while (numCompleted < numSimulationsPerQuery){

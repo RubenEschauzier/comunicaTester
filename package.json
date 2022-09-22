@@ -13,6 +13,7 @@
   },
   "lsd:module": true,
   "dependencies": {
-    "@tensorflow/tfjs-node": "^3.20.0"
+    "@tensorflow/tfjs-node": "^3.20.0",
+    "node-worker-threads-pool": "^1.5.1"
   }
 }

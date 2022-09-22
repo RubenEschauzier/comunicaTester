@@ -551,6 +551,11 @@ node-fetch@^2.6.7, node-fetch@~2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
+node-worker-threads-pool@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/node-worker-threads-pool/-/node-worker-threads-pool-1.5.1.tgz#1034303e10bb63a541ec74ae26559e9dff355f27"
+  integrity sha512-7TXAhpMm+jO4MfESxYLtMGSnJWv+itdNHMdaFmeZuPXxwFGU90mtEB42BciUULXOUAxYBfXILAuvrSG3rQZ7mw==
+
 nopt@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/nopt/-/nopt-5.0.0.tgz#530942bb58a512fccafe53fe210f13a25355dc88"
