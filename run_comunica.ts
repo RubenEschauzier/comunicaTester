@@ -23,66 +23,6 @@ const options = {
     }
   };
   
-
-// class queryTester {
-//     myEngine: any;
-//     timer: any;
-//     logger: any;
-//     constructor(){
-//         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
-
-//         // const QueryEngineFactory = require('@comunica/query-sparql').QueryEngineFactory;
-//         // const timer = require('@comunica/logger-timer').LoggerTimer;
-//         // console.log(timer);
-//         const myEngine = new QueryEngine().create({
-//             configPath: __dirname+"/config.json", // Relative or absolute path 
-//         });
-//         this.myEngine = new QueryEngine();
-
-//     }
-
-//     async queryComunica(query: string, sources:string[]) {
-//         /* Timing the command is still wrong */
-
-//         this.myEngine = await this.myEngine;
-//         const bindingsStream = await this.myEngine.query(query, {sources: sources});
-//         return bindingsStream;
-        
-//     }
-//     timedQueryExecution(query: string, sources: string[]){
-//         const start: number = performance.now();
-//         const bindingResult = this.queryComunica(query, sources);
-//         let elapsed: number = performance.now() - start;
-//         return elapsed;
-//     }
-// }
-
-// class queryTesterTest {
-//     myEngine: any;
-//     timer: any;
-//     constructor(){
-//         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-//         this.myEngine = new QueryEngine();
-
-//     }
-
-//     async queryComunica(query: string, sources:string[]) {
-//         /* Timing the command is still wrong */
-
-//         this.myEngine = await this.myEngine;
-//         console.log(this.myEngine);
-//         const bindingsStream = await this.myEngine.query(query, {sources: sources});
-//         return bindingsStream;
-        
-//     }
-//     timedQueryExecution(query: string, sources: string[]){
-//         const start: number = performance.now();
-//         const bindingResult = this.queryComunica(query, sources);
-//         let elapsed: number = performance.now() - start;
-//         return elapsed;
-//     }
-// }
-
 class trainComunicaModel{
     public engine: any;
     public queries: string[];
@@ -148,6 +88,10 @@ class trainComunicaModel{
         this.masterTree = new this.modelTrainer.MCTSMasterTree();
     }
 
+    public async awaitEngine(){
+        this.engine = await this.engine
+    }
+
 }
 const nResults = [
     0, 0,  0,  0, 4374, 4374,  0, 0,  1,
@@ -157,22 +101,6 @@ const nResults = [
     0, 0,  2,  1
   ]
 
-// let testQuery: string = `SELECT ?s ?p ?o WHERE {?s ?p <http://dbpedia.org/resource/Belgium>. ?s ?p ?o} LIMIT 100`;
-// let testQuery2: string = `SELECT ?s ?p ?o WHERE {?s ?p <http://dbpedia.org/resource/Belgium>. ?s ?p <http://dbpedia.org/resource/Netherlands>. ?s ?p <http://dbpedia.org/resource/England>. ?s ?p ?o} LIMIT 100`
-// let testSources: string[] = ['http://fragments.dbpedia.org/2015/en','https://www.rubensworks.net','https://ruben.verborgh.org/profile/']
-
-// let tester = new queryTester();
-// let timeSpent: number  = tester.timedQueryExecution(testQuery2, testSources);
-
-
-
-// function call(query: string) {
-//     const req = http.request(options, res => {
-//     });
-  
-//     req.write('query=' + query);
-//     req.end();
-// }
 
 function stopCount(hrstart: [number, number]) {
     // execution time simulated with setTimeout function
@@ -181,24 +109,9 @@ function stopCount(hrstart: [number, number]) {
 }
 
 let trainer: trainComunicaModel = new trainComunicaModel();
-// const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
-// loadingComplete.then( result => {
-//     const cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
-//     for (let i = 0; i<cleanedQueries.length; i++){
-//         const querySubset: string[] = cleanedQueries[i];
-//         querySubset.shift();
-//         for (let j = 0; j <querySubset.length; j++){
-//             call('SELECT' + querySubset[j]);
-//             break;
-//         }
-//         break;
-    
-//     }
-//     // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
-// }
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery: number = 5;
-const numEpochs: number = 50;
+const numSimulationsPerQuery: number = 20;
+const numEpochs: number = 30;
 const hrTime = process.hrtime();
 let numCompleted: number = 0;
 
@@ -297,13 +210,16 @@ function addEndListener(beginTime: number, planMap: Map<string, number>, masterM
 }
 
 loadingComplete.then( async result => {
-    const cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
+    let cleanedQueries: string[][] = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
     // const resultArray = [];
 
     // // Perform one query to index the database into comunica 
     // const bindingsStream = await trainer.executeQuery('SELECT' + cleanedQueries[0][0], ["output/dataset.nt"]);
 
+    // HERE WE TEMPORARILY RESTRICT OUR QUERY TO TEST
+    await trainer.awaitEngine();
+    cleanedQueries = [cleanedQueries[7]]
     const lossEpoch: number[] = []
     for (let epoch = 0; epoch<numEpochs; epoch++){
         const lossEpisode: number[] = []
@@ -319,12 +235,19 @@ loadingComplete.then( async result => {
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
                     const mapResults = new Map()
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
                     // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
                     // const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
                     // await queryPromise;
                 }
                 const numEntriesQuery: number = trainer.masterTree.getTotalEntries();
+                const tempMasterMap: Map<string, MCTSJoinInformation> = trainer.masterTree.masterMap;
+
+                // for (const value of tempMasterMap.values()){
+                //     console.log(value.featureMatrix);
+                // }
+                
+                // tempMasterMap.forEach( (value, key) => {console.log(value.featureMatrix)});
                 // Wait for all query executions to finish
                 // await Promise.all(queryPromises);
 
