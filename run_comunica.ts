@@ -29,12 +29,13 @@ class trainComunicaModel{
     public loadedQueries: Promise<boolean>;
     public modelTrainer;
     public masterTree: any;
+    public runningMeanStd: number[][]
 
     public constructor(){
         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
         this.modelTrainer = require('@comunica/model-trainer');
         this.masterTree = new this.modelTrainer.MCTSMasterTree();
-        // this.masterTree = new MCTSMasterTree();
+        this.runningMeanStd = [[0, 0], [0, 0]]
         this.engine = new QueryEngine().create({
             configPath: __dirname+"/config-file.json", // Relative or absolute path 
         });
@@ -111,7 +112,7 @@ function stopCount(hrstart: [number, number]) {
 let trainer: trainComunicaModel = new trainComunicaModel();
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
 const numSimulationsPerQuery: number = 20;
-const numEpochs: number = 30;
+const numEpochs: number = 1000;
 const hrTime = process.hrtime();
 let numCompleted: number = 0;
 

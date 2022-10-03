@@ -20,7 +20,7 @@ class trainComunicaModel {
         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
         this.modelTrainer = require('@comunica/model-trainer');
         this.masterTree = new this.modelTrainer.MCTSMasterTree();
-        // this.masterTree = new MCTSMasterTree();
+        this.runningMeanStd = [[0, 0], [0, 0]];
         this.engine = new QueryEngine().create({
             configPath: __dirname + "/config-file.json", // Relative or absolute path 
         });
@@ -86,7 +86,7 @@ function stopCount(hrstart) {
 let trainer = new trainComunicaModel();
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
 const numSimulationsPerQuery = 20;
-const numEpochs = 30;
+const numEpochs = 1000;
 const hrTime = process.hrtime();
 let numCompleted = 0;
 async function executeQuery(beginTime, bindingStream, planMap, masterMap) {
