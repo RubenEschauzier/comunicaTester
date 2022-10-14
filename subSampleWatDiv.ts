@@ -1,5 +1,5 @@
 const fs = require("fs");
-const sampleSize = .8;
+const sampleSize = .5;
 
 const data = fs.readFileSync('output/dataset.nt');
 const tripleArray = data.toString().split(' .');

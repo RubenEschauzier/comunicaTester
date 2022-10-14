@@ -19,8 +19,13 @@ class trainComunicaModel {
     constructor() {
         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
         this.modelTrainer = require('@comunica/model-trainer');
-        this.masterTree = new this.modelTrainer.MCTSMasterTree();
-        this.runningMeanStd = [[0, 0], [0, 0]];
+        this.runningMoments = { indexes: [0, 7], runningStats: new Map() };
+        for (const index of this.runningMoments.indexes) {
+            const startPoint = { N: 0, mean: 0, std: 0, M2: 0 };
+            this.runningMoments.runningStats.set(index, startPoint);
+        }
+        this.masterTree = new this.modelTrainer.MCTSMasterTree(this.runningMoments);
+        // Only standardise index 0: cardinality, index 7: number of variables in join
         this.engine = new QueryEngine().create({
             configPath: __dirname + "/config-file.json", // Relative or absolute path 
         });
@@ -65,7 +70,7 @@ class trainComunicaModel {
         return loadingComplete;
     }
     resetMasterTree() {
-        this.masterTree = new this.modelTrainer.MCTSMasterTree();
+        this.masterTree = new this.modelTrainer.MCTSMasterTree(this.runningMoments);
     }
     async awaitEngine() {
         this.engine = await this.engine;
@@ -85,10 +90,102 @@ function stopCount(hrstart) {
 }
 let trainer = new trainComunicaModel();
 const loadingComplete = trainer.loadWatDivQueries('output/queries');
-const numSimulationsPerQuery = 20;
-const numEpochs = 1000;
+// Training parameters
+const numSimulationsPerQuery = 8;
+const numEpochs = 100;
 const hrTime = process.hrtime();
-let numCompleted = 0;
+// Initialse moments, note that std = 1 to prevent division by 0
+const runningMomentsY = { N: 0, mean: 0, std: 1, M2: 0 };
+loadingComplete.then(async (result) => {
+    let cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
+    // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
+    // const resultArray = [];
+    // // Perform one query to index the database into comunica 
+    // const bindingsStream = await trainer.executeQuery('SELECT' + cleanedQueries[0][0], ["output/dataset.nt"]);
+    // HERE WE TEMPORARILY RESTRICT OUR QUERY TO TEST
+    await trainer.awaitEngine();
+    // cleanedQueries = cleanedQueries.slice(12,17)
+    cleanedQueries = cleanedQueries.slice(0, 1);
+    const lossEpoch = [];
+    for (let epoch = 0; epoch < numEpochs; epoch++) {
+        const lossEpisode = [];
+        for (let i = 0; i < cleanedQueries.length; i++) {
+            // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
+            const querySubset = [...cleanedQueries[i]];
+            console.log(querySubset);
+            querySubset.shift();
+            for (let j = 0; j < querySubset.length; j++) {
+                /* Execute n queries and record the results */
+                for (let n = 0; n < numSimulationsPerQuery; n++) {
+                    let startTime = process.hrtime();
+                    const startTimeSeconds = startTime[0] + startTime[1] / 1000000000;
+                    const mapResults = new Map();
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
+                    const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process, runningMomentsY);
+                    await queryPromise;
+                }
+                const numEntriesQuery = trainer.masterTree.getTotalEntries();
+                console.log(trainer.masterTree.masterMap);
+                // Normalize the y values
+                for (const key of trainer.masterTree.masterMap.keys()) {
+                    const joinToNormalize = trainer.masterTree.masterMap.get(key.toString());
+                    joinToNormalize.actualExecutionTime = (joinToNormalize.actualExecutionTime - runningMomentsY.mean) / runningMomentsY.std;
+                }
+                /* Train the model using the queries*/
+                let loss = await trainer.trainModel(trainer.masterTree.masterMap, numEntriesQuery);
+                trainer.resetMasterTree();
+                if (loss) {
+                    lossEpisode.push(loss);
+                }
+            }
+        }
+        lossEpoch.push(sum(lossEpisode) / lossEpisode.length);
+        console.log(`Epoch ${epoch}, loss: ${lossEpoch[epoch]}`);
+    }
+    console.log(lossEpoch);
+    // console.log(resultArray);
+    // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
+});
+function sum(arr) {
+    var result = 0, n = arr.length || 0; //may use >>> 0 to ensure length is Uint32
+    while (n--) {
+        result += +arr[n]; // unary operator to ensure ToNumber conversion
+    }
+    return result;
+}
+function addEndListener(beginTime, planMap, masterMap, bindingStream, process, runningMomentsY) {
+    /**
+     * Function that consumes the binding stream and measures elapsed time
+     */
+    const joinPlanQuery = Array.from(planMap)[planMap.size - 1][0];
+    let numEntriesPassed = 0;
+    const finishedReading = new Promise((resolve, reject) => {
+        if (!masterMap.get(joinPlanQuery).actualExecutionTime || masterMap.get(joinPlanQuery).actualExecutionTime == 0) {
+            bindingStream.on('data', (binding) => {
+                numEntriesPassed += 1;
+                // console.log(`Entry Number:${numEntriesPassed}`)
+            });
+            bindingStream.on('end', () => {
+                const end = process.hrtime();
+                const endSeconds = end[0] + end[1] / 1000000000;
+                const elapsed = endSeconds - beginTime;
+                // Update the running moments
+                updateRunningMoments(runningMomentsY, elapsed);
+                // Update the standardized execution time for each joinPlan
+                planMap.forEach((value, key) => {
+                    const joinInformationPrev = masterMap.get(key.toString());
+                    joinInformationPrev.actualExecutionTime = elapsed;
+                    masterMap.set(key.toString(), joinInformationPrev);
+                });
+                // console.log(`Elapsed time ${elapsed}`);
+                // console.log(masterMap);
+                resolve(true);
+            });
+        }
+    });
+    return finishedReading;
+}
 async function executeQuery(beginTime, bindingStream, planMap, masterMap) {
     let numEntriesPassed = 0;
     let elapsed = 0;
@@ -96,7 +193,7 @@ async function executeQuery(beginTime, bindingStream, planMap, masterMap) {
     const finishedReading = new Promise((resolve, reject) => {
         bindingStream.on('data', (binding) => {
             numEntriesPassed += 1;
-            console.log(`${numEntriesPassed}`);
+            // console.log(`${numEntriesPassed}`)
         });
         bindingStream.on('end', () => {
             const end = process.hrtime();
@@ -108,141 +205,19 @@ async function executeQuery(beginTime, bindingStream, planMap, masterMap) {
                 joinInformationPrev.actualExecutionTime = elapsed;
                 masterMap.set(joinPlanQuery, joinInformationPrev);
             });
-            console.log(`Elapsed time ${elapsed}`);
+            // console.log(`Elapsed time ${elapsed}`);
             resolve(true);
         });
     });
     await finishedReading;
     return elapsed;
 }
-function addEndListener(beginTime, planMap, masterMap, bindingStream, process) {
-    const joinPlanQuery = Array.from(planMap)[planMap.size - 1][0];
-    let numEntriesPassed = 0;
-    const finishedReading = new Promise((resolve, reject) => {
-        if (!masterMap.get(joinPlanQuery).actualExecutionTime || masterMap.get(joinPlanQuery).actualExecutionTime == 0) {
-            bindingStream.on('data', (binding) => {
-                numEntriesPassed += 1;
-                console.log(`${numEntriesPassed}`);
-            });
-            bindingStream.on('end', () => {
-                const end = process.hrtime();
-                const endSeconds = end[0] + end[1] / 1000000000;
-                console.log(beginTime);
-                const elapsed = endSeconds - beginTime;
-                // planMap.forEach((value, key, map) => map.set(key, elapsed))
-                // Update the execution time for each joinPlan
-                planMap.forEach((value, key) => {
-                    const joinInformationPrev = masterMap.get(key.toString());
-                    joinInformationPrev.actualExecutionTime = elapsed;
-                    masterMap.set(key.toString(), joinInformationPrev);
-                });
-                console.log(`Elapsed time ${elapsed}`);
-                // console.log(masterMap);
-                numCompleted += 1;
-                resolve(true);
-            });
-        }
-    });
-    return finishedReading;
-    // // Ensure we have our joinplan in the masterMap, this should always be true
-    // if (masterMap.get(joinPlanQuery)){
-    //     // We don't execute the query if we already recorded an execution time for this query during this epoch, this is to save time.
-    //     // console.log(masterMap.get(joinPlanQuery));
-    //     if (!masterMap.get(joinPlanQuery)!.actualExecutionTime || masterMap.get(joinPlanQuery)!.actualExecutionTime == 0){
-    //         bindingStream.on('data', (binding: any) => {
-    //             numEntriesPassed += 1
-    //             console.log(`${numEntriesPassed}`)
-    //         });
-    //         bindingStream.on('end', () => {
-    //             console.log("End")
-    //             const end: number[] = process.hrtime();
-    //             const endSeconds: number = end[0] + end[1] / 1000000000;
-    //             const elapsed: number = endSeconds-beginTime;
-    //             // planMap.forEach((value, key, map) => map.set(key, elapsed))
-    //             // Update the execution time for each joinPlan
-    //             planMap.forEach((value, key) => {const joinInformationPrev = masterMap.get(joinPlanQuery)! 
-    //                 joinInformationPrev.actualExecutionTime = elapsed;
-    //                 masterMap.set(joinPlanQuery, joinInformationPrev);
-    //             })
-    //             console.log(`Elapsed time ${elapsed}`);
-    //             numCompleted += 1;
-    //             finishedReading.resolve()
-    //         })    
-    //     }
-    //     else{
-    //         numCompleted += 1;
-    //     }    
-    // }
+function updateRunningMoments(toUpdateAggregate, newValue) {
+    toUpdateAggregate.N += 1;
+    const delta = newValue - toUpdateAggregate.mean;
+    toUpdateAggregate.mean += delta / toUpdateAggregate.N;
+    const newDelta = newValue - toUpdateAggregate.mean;
+    toUpdateAggregate.M2 += delta * newDelta;
+    toUpdateAggregate.std = Math.sqrt(toUpdateAggregate.M2 / toUpdateAggregate.N);
 }
-loadingComplete.then(async (result) => {
-    let cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
-    // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
-    // const resultArray = [];
-    // // Perform one query to index the database into comunica 
-    // const bindingsStream = await trainer.executeQuery('SELECT' + cleanedQueries[0][0], ["output/dataset.nt"]);
-    // HERE WE TEMPORARILY RESTRICT OUR QUERY TO TEST
-    await trainer.awaitEngine();
-    cleanedQueries = [cleanedQueries[7]];
-    const lossEpoch = [];
-    for (let epoch = 0; epoch < numEpochs; epoch++) {
-        const lossEpisode = [];
-        for (let i = 0; i < cleanedQueries.length; i++) {
-            // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
-            const querySubset = [...cleanedQueries[i]];
-            querySubset.shift();
-            for (let j = 0; j < querySubset.length; j++) {
-                // console.log(`Query ${'SELECT' + querySubset[j]}`);
-                /* Execute n queries and record the results */
-                const queryPromises = [];
-                for (let n = 0; n < numSimulationsPerQuery; n++) {
-                    let startTime = process.hrtime();
-                    const startTimeSeconds = startTime[0] + startTime[1] / 1000000000;
-                    const mapResults = new Map();
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
-                    // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
-                    // const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process);
-                    // await queryPromise;
-                }
-                const numEntriesQuery = trainer.masterTree.getTotalEntries();
-                const tempMasterMap = trainer.masterTree.masterMap;
-                // for (const value of tempMasterMap.values()){
-                //     console.log(value.featureMatrix);
-                // }
-                // tempMasterMap.forEach( (value, key) => {console.log(value.featureMatrix)});
-                // Wait for all query executions to finish
-                // await Promise.all(queryPromises);
-                // const resultBindings = await bindingsStream.toArray();
-                // Wait for all queries in the episode to finish 
-                // while (numCompleted < numSimulationsPerQuery){
-                //     continue;
-                // }
-                /* Train the model using the queries*/
-                let loss = await trainer.trainModel(trainer.masterTree.masterMap, numEntriesQuery);
-                trainer.resetMasterTree();
-                if (loss) {
-                    lossEpisode.push(loss);
-                }
-                numCompleted = 0;
-                break;
-                // resultArray.push(resultBindings.length);
-                // await bindingsStream.on('data', (binding) => {
-                //     console.log(binding.toString()); // Quick way to print bindings for testing
-                // });             
-            }
-            break;
-        }
-        lossEpoch.push(sum(lossEpisode) / lossEpisode.length);
-        console.log(`Epoch ${epoch}, loss: ${lossEpoch[epoch]}`);
-    }
-    console.log(lossEpoch);
-    // console.log(resultArray);
-    // const stream = trainer.executeQuery('SELECT' + cleanedQueries[1], ['http://localhost:3000/sparql'])
-    function sum(arr) {
-        var result = 0, n = arr.length || 0; //may use >>> 0 to ensure length is Uint32
-        while (n--) {
-            result += +arr[n]; // unary operator to ensure ToNumber conversion
-        }
-        return result;
-    }
-});
 //# sourceMappingURL=run_comunica.js.map
