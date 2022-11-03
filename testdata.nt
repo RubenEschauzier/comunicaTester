@@ -1,0 +1,6 @@
+<http://db.uwaterloo.ca/~galuc/wsdbm/User0>	<http://xmlns.com/foaf/givenName>	"PANSY" . 
+<http://db.uwaterloo.ca/~galuc/wsdbm/User0>	<http://db.uwaterloo.ca/~galuc/wsdbm/userId>	"9107381" . 
+<http://db.uwaterloo.ca/~galuc/wsdbm/User1>	<http://db.uwaterloo.ca/~galuc/wsdbm/userId>	"7445468" . 
+<:p1> <:name> "Jane".
+<:p2> <foaf:name> "Bob" .
+<:p2> <foaf:lifoafvesIn> "Houston" .

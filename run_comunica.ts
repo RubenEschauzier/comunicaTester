@@ -36,7 +36,7 @@ class trainComunicaModel{
         this.modelTrainer = require('@comunica/model-trainer');
         this.runningMoments = {indexes: [0,7], runningStats: new Map<number, aggregateValues>()};
         for (const index of this.runningMoments.indexes){
-            const startPoint: aggregateValues = {N: 0, mean: 0, std: 0, M2: 0}
+            const startPoint: aggregateValues = {N: 0, mean: 0, std: 1, M2: 1}
             this.runningMoments.runningStats.set(index, startPoint);
         }
 
@@ -117,14 +117,14 @@ function stopCount(hrstart: [number, number]) {
 }
 
 let trainer: trainComunicaModel = new trainComunicaModel();
-const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output/queries');
+const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('trainingData/queriesEasy');
 
 // Training parameters
-const numSimulationsPerQuery: number = 8;
+const numSimulationsPerQuery: number = 10;
 const numEpochs: number = 100;
 const hrTime = process.hrtime();
 // Initialse moments, note that std = 1 to prevent division by 0
-const runningMomentsY: aggregateValues = {N: 0, mean: 0, std: 1, M2: 0}
+const runningMomentsY: aggregateValues = {N: 0, mean: 0, std: 1, M2: 1}
 
 
 loadingComplete.then( async result => {
@@ -138,7 +138,8 @@ loadingComplete.then( async result => {
     // HERE WE TEMPORARILY RESTRICT OUR QUERY TO TEST
     await trainer.awaitEngine();
     // cleanedQueries = cleanedQueries.slice(12,17)
-    cleanedQueries = cleanedQueries.slice(0,1);
+    // cleanedQueries = cleanedQueries.slice(0,1);
+    console.log(cleanedQueries);
     const lossEpoch: number[] = []
     for (let epoch = 0; epoch<numEpochs; epoch++){
         const lossEpisode: number[] = []
@@ -153,16 +154,16 @@ loadingComplete.then( async result => {
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000 ;
                     const mapResults = new Map()
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
                     // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
                     const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process, runningMomentsY);
                     await queryPromise;
                 }
                 const numEntriesQuery: number = trainer.masterTree.getTotalEntries();
-                console.log(trainer.masterTree.masterMap);
                 // Normalize the y values
-
-
+                // console.log("Running Moments");
+                // console.log(runningMomentsY.mean);
+                // console.log(runningMomentsY.std);
                 for (const key of trainer.masterTree.masterMap.keys()){
                     const joinToNormalize: MCTSJoinInformation = trainer.masterTree.masterMap.get(key.toString());
                     joinToNormalize.actualExecutionTime = (joinToNormalize.actualExecutionTime! - runningMomentsY.mean)/runningMomentsY.std;
@@ -263,3 +264,28 @@ function updateRunningMoments(toUpdateAggregate: aggregateValues, newValue: numb
     toUpdateAggregate.M2 += delta * newDelta;
     toUpdateAggregate.std = Math.sqrt(toUpdateAggregate.M2 / toUpdateAggregate.N);
 }
+
+// public async processLineByLine(vectorLocation: string) {
+//     const fileStream = fs.createReadStream(vectorLocation);
+//     const rl = readline.createInterface({
+//       input: fileStream,
+//       crlfDelay: Infinity
+//     });
+  
+//     for await (const line of rl) {
+//       // Each line in input.txt will be successively available here as `line`.
+//       console.log("Start reading");
+//       const entityVector = line.split(/ (.*)/s);
+//       const entity = entityVector[0]
+//       const vectorRepresentation = entityVector[1].trim().split(" ").map(Number);
+//       console.log(entity)
+//       console.log(vectorRepresentation)
+//       this.graphVectors.set(entity, vectorRepresentation);
+//     }
+//   }
+//   public async loadGraphVectors(){
+//     const vectorLocation = path.join(__dirname, "..", "..", "/actor-rdf-join-inner-multi-reinforcement-learning/model/vectors.txt");
+//     this.graphVectors = new Map();
+//     // const vectors = JSON.parse(readFileSync(vectorLocation, 'utf8'));
+//     await this.processLineByLine(vectorLocation);
+//   }

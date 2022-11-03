@@ -21,7 +21,7 @@ class trainComunicaModel {
         this.modelTrainer = require('@comunica/model-trainer');
         this.runningMoments = { indexes: [0, 7], runningStats: new Map() };
         for (const index of this.runningMoments.indexes) {
-            const startPoint = { N: 0, mean: 0, std: 0, M2: 0 };
+            const startPoint = { N: 0, mean: 0, std: 1, M2: 1 };
             this.runningMoments.runningStats.set(index, startPoint);
         }
         this.masterTree = new this.modelTrainer.MCTSMasterTree(this.runningMoments);
@@ -89,13 +89,13 @@ function stopCount(hrstart) {
     return hrend[0] * 1000 + hrend[1] / 1000000;
 }
 let trainer = new trainComunicaModel();
-const loadingComplete = trainer.loadWatDivQueries('output/queries');
+const loadingComplete = trainer.loadWatDivQueries('trainingData/queriesEasy');
 // Training parameters
-const numSimulationsPerQuery = 8;
+const numSimulationsPerQuery = 10;
 const numEpochs = 100;
 const hrTime = process.hrtime();
 // Initialse moments, note that std = 1 to prevent division by 0
-const runningMomentsY = { N: 0, mean: 0, std: 1, M2: 0 };
+const runningMomentsY = { N: 0, mean: 0, std: 1, M2: 1 };
 loadingComplete.then(async (result) => {
     let cleanedQueries = trainer.queries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT'));
     // const resultQuery  = await trainer.executeQuery('SELECT * WHERE {?s ?p ?o } LIMIT 100', ["output/dataset.nt"]);
@@ -105,14 +105,14 @@ loadingComplete.then(async (result) => {
     // HERE WE TEMPORARILY RESTRICT OUR QUERY TO TEST
     await trainer.awaitEngine();
     // cleanedQueries = cleanedQueries.slice(12,17)
-    cleanedQueries = cleanedQueries.slice(0, 1);
+    // cleanedQueries = cleanedQueries.slice(0,1);
+    console.log(cleanedQueries);
     const lossEpoch = [];
     for (let epoch = 0; epoch < numEpochs; epoch++) {
         const lossEpisode = [];
         for (let i = 0; i < cleanedQueries.length; i++) {
             // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
             const querySubset = [...cleanedQueries[i]];
-            console.log(querySubset);
             querySubset.shift();
             for (let j = 0; j < querySubset.length; j++) {
                 /* Execute n queries and record the results */
@@ -120,14 +120,16 @@ loadingComplete.then(async (result) => {
                     let startTime = process.hrtime();
                     const startTimeSeconds = startTime[0] + startTime[1] / 1000000000;
                     const mapResults = new Map();
-                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["outputSampled/dataset.nt"], mapResults);
+                    const bindingsStream = await trainer.executeQuery('SELECT' + querySubset[j], ["output/dataset.nt"], mapResults);
                     // queryPromises.push(addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process));
                     const queryPromise = addEndListener(startTimeSeconds, mapResults, trainer.masterTree.masterMap, bindingsStream, process, runningMomentsY);
                     await queryPromise;
                 }
                 const numEntriesQuery = trainer.masterTree.getTotalEntries();
-                console.log(trainer.masterTree.masterMap);
                 // Normalize the y values
+                // console.log("Running Moments");
+                // console.log(runningMomentsY.mean);
+                // console.log(runningMomentsY.std);
                 for (const key of trainer.masterTree.masterMap.keys()) {
                     const joinToNormalize = trainer.masterTree.masterMap.get(key.toString());
                     joinToNormalize.actualExecutionTime = (joinToNormalize.actualExecutionTime - runningMomentsY.mean) / runningMomentsY.std;
@@ -220,4 +222,27 @@ function updateRunningMoments(toUpdateAggregate, newValue) {
     toUpdateAggregate.M2 += delta * newDelta;
     toUpdateAggregate.std = Math.sqrt(toUpdateAggregate.M2 / toUpdateAggregate.N);
 }
+// public async processLineByLine(vectorLocation: string) {
+//     const fileStream = fs.createReadStream(vectorLocation);
+//     const rl = readline.createInterface({
+//       input: fileStream,
+//       crlfDelay: Infinity
+//     });
+//     for await (const line of rl) {
+//       // Each line in input.txt will be successively available here as `line`.
+//       console.log("Start reading");
+//       const entityVector = line.split(/ (.*)/s);
+//       const entity = entityVector[0]
+//       const vectorRepresentation = entityVector[1].trim().split(" ").map(Number);
+//       console.log(entity)
+//       console.log(vectorRepresentation)
+//       this.graphVectors.set(entity, vectorRepresentation);
+//     }
+//   }
+//   public async loadGraphVectors(){
+//     const vectorLocation = path.join(__dirname, "..", "..", "/actor-rdf-join-inner-multi-reinforcement-learning/model/vectors.txt");
+//     this.graphVectors = new Map();
+//     // const vectors = JSON.parse(readFileSync(vectorLocation, 'utf8'));
+//     await this.processLineByLine(vectorLocation);
+//   }
 //# sourceMappingURL=run_comunica.js.map
