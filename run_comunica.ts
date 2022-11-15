@@ -139,7 +139,6 @@ loadingComplete.then( async result => {
     await trainer.awaitEngine();
     // cleanedQueries = cleanedQueries.slice(12,17)
     // cleanedQueries = cleanedQueries.slice(0,1);
-    console.log(cleanedQueries);
     const lossEpoch: number[] = []
     for (let epoch = 0; epoch<numEpochs; epoch++){
         const lossEpisode: number[] = []
