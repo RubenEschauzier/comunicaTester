@@ -1,0 +1,47 @@
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City63> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City159> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City124> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City216> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City230> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City84> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City159> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://schema.org/jobTitle> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/City161> <http://www.geonames.org/ontology#parentCountry> ?v3 .
+	?v0 <http://schema.org/nationality> ?v3 .
+}

@@ -1,0 +1,216 @@
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?label ?comment ?producer ?productFeature ?propertyTextual1 ?propertyTextual2 ?propertyTextual3
+ ?propertyNumeric1 ?propertyNumeric2 ?propertyTextual4 ?propertyTextual5 ?propertyNumeric4 
+WHERE {
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> rdfs:label ?label .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> rdfs:comment ?comment .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:producer ?p .
+    ?p rdfs:label ?producer .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> dc:publisher ?p . 
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productFeature ?f .
+    ?f rdfs:label ?productFeature .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyTextual1 ?propertyTextual1 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyTextual2 ?propertyTextual2 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyTextual3 ?propertyTextual3 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyNumeric1 ?propertyNumeric1 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyNumeric2 ?propertyNumeric2 .
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyTextual4 ?propertyTextual4 }
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyTextual5 ?propertyTextual5 }
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer4/Product139> bsbm:productPropertyNumeric4 ?propertyNumeric4 }
+}
+
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?label ?comment ?producer ?productFeature ?propertyTextual1 ?propertyTextual2 ?propertyTextual3
+ ?propertyNumeric1 ?propertyNumeric2 ?propertyTextual4 ?propertyTextual5 ?propertyNumeric4 
+WHERE {
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> rdfs:label ?label .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> rdfs:comment ?comment .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:producer ?p .
+    ?p rdfs:label ?producer .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> dc:publisher ?p . 
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productFeature ?f .
+    ?f rdfs:label ?productFeature .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyTextual1 ?propertyTextual1 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyTextual2 ?propertyTextual2 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyTextual3 ?propertyTextual3 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyNumeric1 ?propertyNumeric1 .
+    <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyNumeric2 ?propertyNumeric2 .
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyTextual4 ?propertyTextual4 }
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyTextual5 ?propertyTextual5 }
+    OPTIONAL { <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product394> bsbm:productPropertyNumeric4 ?propertyNumeric4 }
+}
+
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?product ?label ?propertyTextual
+WHERE {
+    { 
+       ?product rdfs:label ?label .
+       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType31> .
+       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2118> .
+	   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2728> .
+       ?product bsbm:productPropertyTextual1 ?propertyTextual .
+	   ?product bsbm:productPropertyNumeric1 ?p1 .
+	   FILTER ( ?p1 > 803 )
+    } UNION {
+       ?product rdfs:label ?label .
+       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType31> .
+       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2118> .
+	   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2457> .
+       ?product bsbm:productPropertyTextual1 ?propertyTextual .
+	   ?product bsbm:productPropertyNumeric2 ?p2 .
+	   FILTER ( ?p2> 1437 ) 
+    } 
+}
+ORDER BY ?label
+OFFSET 5
+LIMIT 10
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT DISTINCT ?product ?label ?propertyTextual
+WHERE {
+    { 
+       ?product rdfs:label ?label .
+       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType47> .
+       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1229> .
+	   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1568> .
+       ?product bsbm:productPropertyTextual1 ?propertyTextual .
+	   ?product bsbm:productPropertyNumeric1 ?p1 .
+	   FILTER ( ?p1 > 68 )
+    } UNION {
+       ?product rdfs:label ?label .
+       ?product rdf:type <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType47> .
+       ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1229> .
+	   ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1786> .
+       ?product bsbm:productPropertyTextual1 ?propertyTextual .
+	   ?product bsbm:productPropertyNumeric2 ?p2 .
+	   FILTER ( ?p2> 571 ) 
+    } 
+}
+ORDER BY ?label
+OFFSET 5
+LIMIT 10
+
+[sep] 
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?productLabel ?offer ?price ?vendor ?vendorTitle ?review ?revTitle 
+       ?reviewer ?revName ?rating1 ?rating2
+WHERE { 
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product45> rdfs:label ?productLabel .
+    OPTIONAL {
+        ?offer bsbm:product <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product45> .
+		?offer bsbm:price ?price .
+		?offer bsbm:vendor ?vendor .
+		?vendor rdfs:label ?vendorTitle .
+        ?vendor bsbm:country <http://downlode.org/rdf/iso-3166/countries#DE> .
+        ?offer dc:publisher ?vendor . 
+        ?offer bsbm:validTo ?date .
+        FILTER (?date > "2008-08-13T00:00:00" )
+    }
+    OPTIONAL {
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product45> .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?revName .
+	?review dc:title ?revTitle .
+    OPTIONAL { ?review bsbm:rating1 ?rating1 . }
+    OPTIONAL { ?review bsbm:rating2 ?rating2 . } 
+    }
+}
+[sep] 
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?productLabel ?offer ?price ?vendor ?vendorTitle ?review ?revTitle 
+       ?reviewer ?revName ?rating1 ?rating2
+WHERE { 
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer11/Product496> rdfs:label ?productLabel .
+    OPTIONAL {
+        ?offer bsbm:product <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer11/Product496> .
+		?offer bsbm:price ?price .
+		?offer bsbm:vendor ?vendor .
+		?vendor rdfs:label ?vendorTitle .
+        ?vendor bsbm:country <http://downlode.org/rdf/iso-3166/countries#DE> .
+        ?offer dc:publisher ?vendor . 
+        ?offer bsbm:validTo ?date .
+        FILTER (?date > "2001-07-16" )
+    }
+    OPTIONAL {
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer11/Product496> .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?revName .
+	?review dc:title ?revTitle .
+    OPTIONAL { ?review bsbm:rating1 ?rating1 . }
+    OPTIONAL { ?review bsbm:rating2 ?rating2 . } 
+    }
+}
+
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName ?rating1 ?rating2 ?rating3 ?rating4 
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer8/Product357> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	FILTER langMatches( lang(?text), "EN" ) 
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+	OPTIONAL { ?review bsbm:rating1 ?rating1 . }
+	OPTIONAL { ?review bsbm:rating2 ?rating2 . }
+	OPTIONAL { ?review bsbm:rating3 ?rating3 . }
+	OPTIONAL { ?review bsbm:rating4 ?rating4 . }
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName ?rating1 ?rating2 ?rating3 ?rating4 
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer9/Product399> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	FILTER langMatches( lang(?text), "EN" ) 
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+	OPTIONAL { ?review bsbm:rating1 ?rating1 . }
+	OPTIONAL { ?review bsbm:rating2 ?rating2 . }
+	OPTIONAL { ?review bsbm:rating3 ?rating3 . }
+	OPTIONAL { ?review bsbm:rating4 ?rating4 . }
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20

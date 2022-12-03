@@ -16,6 +16,7 @@ class trainComunicaModel{
     public modelTrainer;
     public masterTree: any;
     public runningMoments: runningMoments;
+    public valQueries: string[];
 
     public constructor(){
         const QueryEngine = require('@comunica/query-sparql-file').QueryEngineFactory;
@@ -37,11 +38,13 @@ class trainComunicaModel{
         this.queriesEasyVal=[];
         this.queriesMediumVal=[];
         this.queriesHardVal=[];
+        this.valQueries = [];
     }
 
     public async executeQuery(query: string, sources:string[], planHolder: Map<string, number>, validation: boolean){
         this.engine = await this.engine;
-        const bindingsStream = await this.engine.queryBindings(query, {sources: sources, masterTree: this.masterTree, planHolder: planHolder, validation: validation});
+        const bindingsStream = await this.engine.queryBindings(query, {sources: sources, masterTree: this.masterTree, planHolder: planHolder, validation: validation,
+            modelLocation: 'trainedModelWatDivFinal/epoch14easy'});
         return bindingsStream
     }
 
@@ -134,6 +137,25 @@ class trainComunicaModel{
         });
         return loadingComplete;
     }
+    public async loadValQueries(queryDir: string, ){
+        const loadingComplete = new Promise<boolean> (async (resolve, reject) => {
+            try {
+                const files = await fs.promises.readdir( queryDir );
+                for( const file of files ) {
+                    // Get the full paths
+                    const filePath = path.join( queryDir, file );    
+                    const data = fs.readFileSync(filePath,'utf8');
+                    this.valQueries.push(data);
+                resolve(true); 
+                }
+            }
+            catch( e ) {
+                console.error( "Something went wrong.", e );
+                reject();
+            }
+        });
+        return loadingComplete;
+    }
 
     public async loadWatDivQueries(queryDir: string){
         const loadingComplete = new Promise<boolean> (async (resolve, reject) => {
@@ -141,9 +163,10 @@ class trainComunicaModel{
                 await this.loadWatDivQueriesStrength(queryDir+'/easy', 'easy');
                 await this.loadWatDivQueriesStrength(queryDir+'/medium', 'medium');
                 await this.loadWatDivQueriesStrength(queryDir+'/hard', 'hard');
-                await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/easy.txt', 'easy');
-                await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/medium.txt', 'medium');
-                await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/hard.txt', 'hard');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/easy.txt', 'easy');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/medium.txt', 'medium');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/hard.txt', 'hard');
+                await this.loadValQueries(queryDir+'/validation');
                 resolve(true); 
             }
             catch( e ) {
@@ -153,8 +176,8 @@ class trainComunicaModel{
         });
         return loadingComplete;
     }
-    public saveModel(saveString: string){
-        this.engine.saveModel(saveString);
+    public saveModel(saveString: string, runningMomentsX: aggregateValues, runningMomentsY: aggregateValues){
+        this.engine.saveModel(saveString, runningMomentsX, runningMomentsY);
     }
 
     public resetMasterTree(){
@@ -192,35 +215,32 @@ const runningMomentsYHard: aggregateValues = {N: 0, mean: 0, std: 1, M2: 1};
 const loadingComplete: Promise<boolean> = trainer.loadWatDivQueries('output');
 // Start train on easy, continue further
 loadingComplete.then(async result => {
-    await trainModel('easy', runningMomentsYEasy, numEpochs, numSimulationsPerQuery);
-    // // console.log("Train model done!");
+    // await trainModel('easy', runningMomentsYEasy, numEpochs, numSimulationsPerQuery);
+    // // // // console.log("Train model done!");
     await trainModel('medium', runningMomentsYMedium, numEpochs, numSimulationsPerQuery);
-    await trainModel('hard', runningMomentsYHard, numEpochs, numSimulationsPerQuery)
+    // await trainModel('hard', runningMomentsYHard, numEpochs, numSimulationsPerQuery)
 })
 
 async function trainModel(difficulty: "easy"|"medium"|"hard", momentsY: aggregateValues, nEpoch: number, nSimPerQuery: number){
     let cleanedQueriesEasy: string[][] = trainer.queriesEasy.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
     let cleanedQueriesMedium: string[][] = trainer.queriesMedium.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
     let cleanedQueriesHard: string[][] = trainer.queriesHard.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesEasyVal: string[][] = trainer.queriesEasyVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesMediumVal: string[][] = trainer.queriesMediumVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesHardVal: string[][] = trainer.queriesHardVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    
+    // let cleanedQueriesEasyVal: string[][] = trainer.queriesEasyVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    // let cleanedQueriesMediumVal: string[][] = trainer.queriesMediumVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    // let cleanedQueriesHardVal: string[][] = trainer.queriesHardVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    let cleanedQueriesVal: string[][] = trainer.valQueries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+
     let trainQueries: string[][] = [[]];
-    let valQueries: string[][] = [[]]
     if (difficulty=='easy'){
         trainQueries = [...cleanedQueriesEasy];
-        valQueries = [... cleanedQueriesEasyVal]
     }
     if (difficulty=='medium'){
         trainQueries = [...cleanedQueriesEasy, ...cleanedQueriesMedium ];
-        valQueries = [...cleanedQueriesEasyVal, ...cleanedQueriesMediumVal ];
     }
     if(difficulty=='hard'){
         trainQueries = [...cleanedQueriesEasy, ...cleanedQueriesMedium, ...cleanedQueriesHard];
-        valQueries = [...cleanedQueriesEasyVal, ...cleanedQueriesMediumVal, ...cleanedQueriesHardVal];
     }
-    const trainLoss: number[] = await trainLoop(trainQueries, valQueries, momentsY, nEpoch, nSimPerQuery, difficulty);
+    const trainLoss: number[] = await trainLoop(trainQueries, cleanedQueriesVal, momentsY, nEpoch, nSimPerQuery, difficulty);
     return trainLoss
 }
 async function trainLoop(trainQueries: string[][], valQueries: string[][], momentsY: aggregateValues, nEpoch: number, nSimPerQuery: number, 
@@ -231,10 +251,14 @@ async function trainLoop(trainQueries: string[][], valQueries: string[][], momen
     const trainLoss: number[] = [];
 
     const lossTrain: number[] = [];
+
+    const mapResultsTemp = new Map()
+    const bindingsStream = await trainer.executeQuery('SELECT'+trainQueries[0][0], ["output/dataset.nt"], mapResultsTemp, true);
+    trainer.resetMasterTree();
+    console.log(`We train ${nEpoch} epochs, perform ${nSimPerQuery} query sims and train on ${trainQueries.length} query types`)
     for (let epoch = 0; epoch<nEpoch; epoch++){
         const lossQuery: number[] = []
         for (let i = 0; i<trainQueries.length; i++){
-            // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
             const querySubset: string[] = [... trainQueries[i]];
             for (let j = 0; j <querySubset.length; j++){
                 /* Execute n queries and record the results */
@@ -266,13 +290,14 @@ async function trainLoop(trainQueries: string[][], valQueries: string[][], momen
                 }
             }
         }
-        trainer.saveModel('epoch'+epoch+difficulty);
+        trainer.saveModel('WatDivEpoch'+epoch+difficulty, trainer.masterTree.runningMoments, momentsY);
         lossTrain.push(sum(lossQuery)/lossQuery.length);
         console.log(`Epoch ${epoch}, Loss: ${lossTrain[epoch]}`);
-        const valMetrics = await validationLoop(valQueries, momentsY, 5);
+        const valMetrics = await validationLoop(valQueries, momentsY, 6);
         console.log(`Epoch ${epoch}, Val Loss ${valMetrics[0]}, Val MSE ${valMetrics[1]}, Val Execution Time ${valMetrics[2]}`);
         valLoss.push(valMetrics[0]); valMSE.push(valMetrics[1]); valExecutionTime.push(valMetrics[2]); trainLoss.push(sum(lossQuery)/lossQuery.length);
     }
+
     fs.writeFileSync(path.join(__dirname, '../trainingOutput/valLoss'+difficulty+'.txt'), JSON.stringify(valLoss));
     fs.writeFileSync(path.join(__dirname, '../trainingOutput/valMSE'+difficulty+'.txt'), JSON.stringify(valMSE));
     fs.writeFileSync(path.join(__dirname, '../trainingOutput/valExecutionTime'+difficulty+'.txt'), JSON.stringify(valExecutionTime));
@@ -286,7 +311,6 @@ async function validationLoop(validationQueries: string[][], momentsY: aggregate
     const actualExecutionTimeValidation: number[] = [];
     const MSEValidation: number[] = [];
     for (let i = 0; i<validationQueries.length; i++){
-        // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
         const querySubset: string[] = [... validationQueries[i]];
         for (let j = 0; j <querySubset.length; j++){
             /* Execute query and record the results */
@@ -319,10 +343,10 @@ async function validationLoop(validationQueries: string[][], momentsY: aggregate
                 totalExecutionTime+=unNormExecutionTime[0]
     
             }
-            lossValidation.push(totalLoss/numSimulationsPerQuery);
-            MSEValidation.push(totalMSE/numSimulationsPerQuery);
+            lossValidation.push(totalLoss/numSimulationsVal);
+            MSEValidation.push(totalMSE/numSimulationsVal);
             // Use unnormalized execution times to compare
-            actualExecutionTimeValidation.push(totalExecutionTime/numSimulationsPerQuery);
+            actualExecutionTimeValidation.push(totalExecutionTime/numSimulationsVal);
 
         }
     }
@@ -356,6 +380,7 @@ function addEndListener(beginTime: number, planMap: Map<string, number>, masterM
             });
             
             bindingStream.on('end', () => {
+                // console.log(`Query Gives ${numEntriesPassed} Entries`)
                 const end: number[] = process.hrtime();
                 const endSeconds: number = end[0] + end[1] / 1000000000;
                 const elapsed: number = endSeconds-beginTime;

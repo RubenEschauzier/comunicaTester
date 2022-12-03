@@ -1,0 +1,102 @@
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product3> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product37> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product11> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName 
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product34> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName 
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product8> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20
+[sep] 
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+SELECT ?title ?text ?reviewDate ?reviewer ?reviewerName  
+WHERE { 
+	?review bsbm:reviewFor <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product24> .
+	?review dc:title ?title .
+	?review rev:text ?text .
+	?review bsbm:reviewDate ?reviewDate .
+	?review rev:reviewer ?reviewer .
+	?reviewer foaf:name ?reviewerName .
+}
+ORDER BY DESC(?reviewDate)
+LIMIT 20

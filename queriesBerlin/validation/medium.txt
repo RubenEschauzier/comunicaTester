@@ -1,0 +1,87 @@
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?product ?label
+WHERE {
+    ?product rdfs:label ?label .
+    ?product a <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType45> .
+	?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1762> .
+	?product bsbm:productPropertyNumeric1 ?p1 .
+	FILTER ( ?p1 > 975 ) 
+	?product bsbm:productPropertyNumeric3 ?p3 .
+	FILTER (?p3 < 498 )
+    OPTIONAL { 
+        ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature1037> .
+        ?product rdfs:label ?testVar }
+    FILTER (!bound(?testVar)) 
+}
+ORDER BY ?label
+LIMIT 10
+
+
+[sep] 
+PREFIX bsbm-inst: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?product ?label
+WHERE {
+    ?product rdfs:label ?label .
+    ?product a <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductType13> .
+	?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2321> .
+	?product bsbm:productPropertyNumeric1 ?p1 .
+	FILTER ( ?p1 > 1407 ) 
+	?product bsbm:productPropertyNumeric3 ?p3 .
+	FILTER (?p3 < 107 )
+    OPTIONAL { 
+        ?product bsbm:productFeature <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/ProductFeature2091> .
+        ?product rdfs:label ?testVar }
+    FILTER (!bound(?testVar)) 
+}
+ORDER BY ?label
+LIMIT 10
+
+[sep] 
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+
+SELECT DISTINCT ?product ?productLabel
+WHERE { 
+	?product rdfs:label ?productLabel .
+    FILTER (<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer5/Product205> != ?product)
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer5/Product205> bsbm:productFeature ?prodFeature .
+	?product bsbm:productFeature ?prodFeature .
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer5/Product205> bsbm:productPropertyNumeric1 ?origProperty1 .
+	?product bsbm:productPropertyNumeric1 ?simProperty1 .
+	FILTER (?simProperty1 < (?origProperty1 + 120) && ?simProperty1 > (?origProperty1 - 120))
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer5/Product205> bsbm:productPropertyNumeric2 ?origProperty2 .
+	?product bsbm:productPropertyNumeric2 ?simProperty2 .
+	FILTER (?simProperty2 < (?origProperty2 + 170) && ?simProperty2 > (?origProperty2 - 170))
+}
+ORDER BY ?productLabel
+LIMIT 5
+[sep] 
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bsbm: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/vocabulary/>
+
+SELECT DISTINCT ?product ?productLabel
+WHERE { 
+	?product rdfs:label ?productLabel .
+    FILTER (<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer3/Product107> != ?product)
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer3/Product107> bsbm:productFeature ?prodFeature .
+	?product bsbm:productFeature ?prodFeature .
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer3/Product107> bsbm:productPropertyNumeric1 ?origProperty1 .
+	?product bsbm:productPropertyNumeric1 ?simProperty1 .
+	FILTER (?simProperty1 < (?origProperty1 + 120) && ?simProperty1 > (?origProperty1 - 120))
+	<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer3/Product107> bsbm:productPropertyNumeric2 ?origProperty2 .
+	?product bsbm:productPropertyNumeric2 ?simProperty2 .
+	FILTER (?simProperty2 < (?origProperty2 + 170) && ?simProperty2 > (?origProperty2 - 170))
+}
+ORDER BY ?productLabel
+LIMIT 5

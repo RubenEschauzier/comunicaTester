@@ -1,0 +1,100 @@
+SELECT ?v0 WHERE {
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/likes> ?v1 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/friendOf> ?v2 .
+	?v0 <http://purl.org/dc/terms/Location> ?v3 .
+	?v0 <http://xmlns.com/foaf/age> ?v4 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/gender> ?v5 .
+	?v0 <http://xmlns.com/foaf/givenName> ?v6 .
+}
+
+SELECT ?v0 ?v1 ?v2 ?v4 ?v5 ?v6 WHERE {
+	?v0 <http://schema.org/contentRating> ?v1 .
+	?v0 <http://schema.org/contentSize> ?v2 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre> <http://db.uwaterloo.ca/~galuc/wsdbm/SubGenre79> .
+	?v4 <http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase> ?v5 .
+	?v5 <http://db.uwaterloo.ca/~galuc/wsdbm/purchaseDate> ?v6 .
+	?v5 <http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor> ?v0 .
+}
+
+SELECT ?v0 ?v1 ?v2 ?v4 ?v5 ?v6 WHERE {
+	?v0 <http://schema.org/contentRating> ?v1 .
+	?v0 <http://schema.org/contentSize> ?v2 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre> <http://db.uwaterloo.ca/~galuc/wsdbm/SubGenre117> .
+	?v4 <http://db.uwaterloo.ca/~galuc/wsdbm/makesPurchase> ?v5 .
+	?v5 <http://db.uwaterloo.ca/~galuc/wsdbm/purchaseDate> ?v6 .
+	?v5 <http://db.uwaterloo.ca/~galuc/wsdbm/purchaseFor> ?v0 .
+}
+
+SELECT ?v0 ?v1 ?v3 ?v4 ?v5 ?v6 WHERE {
+	?v0 <http://purl.org/goodrelations/includes> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/Retailer11> <http://purl.org/goodrelations/offers> ?v0 .
+	?v0 <http://purl.org/goodrelations/price> ?v3 .
+	?v0 <http://purl.org/goodrelations/validThrough> ?v4 .
+	?v1 <http://ogp.me/ns#title> ?v5 .
+	?v1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?v6 .
+}
+
+SELECT ?v0 ?v1 ?v3 ?v4 ?v5 ?v6 WHERE {
+	?v0 <http://purl.org/goodrelations/includes> ?v1 .
+	<http://db.uwaterloo.ca/~galuc/wsdbm/Retailer13> <http://purl.org/goodrelations/offers> ?v0 .
+	?v0 <http://purl.org/goodrelations/price> ?v3 .
+	?v0 <http://purl.org/goodrelations/validThrough> ?v4 .
+	?v1 <http://ogp.me/ns#title> ?v5 .
+	?v1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?v6 .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://purl.org/dc/terms/Location> ?v1 .
+	?v0 <http://schema.org/nationality> <http://db.uwaterloo.ca/~galuc/wsdbm/Country17> .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/gender> ?v3 .
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/Role2> .
+}
+
+SELECT ?v0 ?v1 ?v3 WHERE {
+	?v0 <http://purl.org/dc/terms/Location> ?v1 .
+	?v0 <http://schema.org/nationality> <http://db.uwaterloo.ca/~galuc/wsdbm/Country23> .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/gender> ?v3 .
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/Role2> .
+}
+
+SELECT ?v0 ?v2 ?v3 ?v4 WHERE {
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory14> .
+	?v0 <http://schema.org/caption> ?v2 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre> ?v3 .
+	?v0 <http://schema.org/publisher> ?v4 .
+}
+
+SELECT ?v0 ?v2 ?v3 ?v4 WHERE {
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory10> .
+	?v0 <http://schema.org/caption> ?v2 .
+	?v0 <http://db.uwaterloo.ca/~galuc/wsdbm/hasGenre> ?v3 .
+	?v0 <http://schema.org/publisher> ?v4 .
+}
+
+SELECT ?v0 ?v2 ?v3 WHERE {
+	?v0 <http://xmlns.com/foaf/age> <http://db.uwaterloo.ca/~galuc/wsdbm/AgeGroup8> .
+	?v0 <http://xmlns.com/foaf/familyName> ?v2 .
+	?v3 <http://purl.org/ontology/mo/artist> ?v0 .
+	?v0 <http://schema.org/nationality> <http://db.uwaterloo.ca/~galuc/wsdbm/Country1> .
+}
+
+SELECT ?v0 ?v2 ?v3 WHERE {
+	?v0 <http://xmlns.com/foaf/age> <http://db.uwaterloo.ca/~galuc/wsdbm/AgeGroup6> .
+	?v0 <http://xmlns.com/foaf/familyName> ?v2 .
+	?v3 <http://purl.org/ontology/mo/artist> ?v0 .
+	?v0 <http://schema.org/nationality> <http://db.uwaterloo.ca/~galuc/wsdbm/Country1> .
+}
+
+SELECT ?v0 ?v2 ?v3 WHERE {
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory14> .
+	?v0 <http://schema.org/description> ?v2 .
+	?v0 <http://schema.org/keywords> ?v3 .
+	?v0 <http://schema.org/language> <http://db.uwaterloo.ca/~galuc/wsdbm/Language0> .
+}
+
+SELECT ?v0 ?v2 ?v3 WHERE {
+	?v0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://db.uwaterloo.ca/~galuc/wsdbm/ProductCategory10> .
+	?v0 <http://schema.org/description> ?v2 .
+	?v0 <http://schema.org/keywords> ?v3 .
+	?v0 <http://schema.org/language> <http://db.uwaterloo.ca/~galuc/wsdbm/Language0> .
+}

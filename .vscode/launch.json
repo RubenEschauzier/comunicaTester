@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/jsFiles/comunica_experiment_watdiv.js",
+            "program": "${workspaceFolder}/jsFiles/comunica_experiment_berlin.js",
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": [
                 "${workspaceFolder}/jsFiles/**/*.js"

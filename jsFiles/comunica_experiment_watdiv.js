@@ -22,10 +22,12 @@ class trainComunicaModel {
         this.queriesEasyVal = [];
         this.queriesMediumVal = [];
         this.queriesHardVal = [];
+        this.valQueries = [];
     }
     async executeQuery(query, sources, planHolder, validation) {
         this.engine = await this.engine;
-        const bindingsStream = await this.engine.queryBindings(query, { sources: sources, masterTree: this.masterTree, planHolder: planHolder, validation: validation });
+        const bindingsStream = await this.engine.queryBindings(query, { sources: sources, masterTree: this.masterTree, planHolder: planHolder, validation: validation,
+            modelLocation: 'trainedModelWatDivFinal/epoch14easy' });
         return bindingsStream;
     }
     async explainQuery(query, sources) {
@@ -110,15 +112,35 @@ class trainComunicaModel {
         });
         return loadingComplete;
     }
+    async loadValQueries(queryDir) {
+        const loadingComplete = new Promise(async (resolve, reject) => {
+            try {
+                const files = await fs.promises.readdir(queryDir);
+                for (const file of files) {
+                    // Get the full paths
+                    const filePath = path.join(queryDir, file);
+                    const data = fs.readFileSync(filePath, 'utf8');
+                    this.valQueries.push(data);
+                    resolve(true);
+                }
+            }
+            catch (e) {
+                console.error("Something went wrong.", e);
+                reject();
+            }
+        });
+        return loadingComplete;
+    }
     async loadWatDivQueries(queryDir) {
         const loadingComplete = new Promise(async (resolve, reject) => {
             try {
                 await this.loadWatDivQueriesStrength(queryDir + '/easy', 'easy');
                 await this.loadWatDivQueriesStrength(queryDir + '/medium', 'medium');
                 await this.loadWatDivQueriesStrength(queryDir + '/hard', 'hard');
-                await this.loadWatDivQueriesStrengthVal(queryDir + '/validation/easy.txt', 'easy');
-                await this.loadWatDivQueriesStrengthVal(queryDir + '/validation/medium.txt', 'medium');
-                await this.loadWatDivQueriesStrengthVal(queryDir + '/validation/hard.txt', 'hard');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/easy.txt', 'easy');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/medium.txt', 'medium');
+                // await this.loadWatDivQueriesStrengthVal(queryDir+'/validation/hard.txt', 'hard');
+                await this.loadValQueries(queryDir + '/validation');
                 resolve(true);
             }
             catch (e) {
@@ -128,8 +150,8 @@ class trainComunicaModel {
         });
         return loadingComplete;
     }
-    saveModel(saveString) {
-        this.engine.saveModel(saveString);
+    saveModel(saveString, runningMomentsX, runningMomentsY) {
+        this.engine.saveModel(saveString, runningMomentsX, runningMomentsY);
     }
     resetMasterTree() {
         this.masterTree = new this.modelTrainer.MCTSMasterTree(this.runningMoments);
@@ -157,33 +179,30 @@ const runningMomentsYHard = { N: 0, mean: 0, std: 1, M2: 1 };
 const loadingComplete = trainer.loadWatDivQueries('output');
 // Start train on easy, continue further
 loadingComplete.then(async (result) => {
-    await trainModel('easy', runningMomentsYEasy, numEpochs, numSimulationsPerQuery);
-    // // console.log("Train model done!");
+    // await trainModel('easy', runningMomentsYEasy, numEpochs, numSimulationsPerQuery);
+    // // // // console.log("Train model done!");
     await trainModel('medium', runningMomentsYMedium, numEpochs, numSimulationsPerQuery);
-    await trainModel('hard', runningMomentsYHard, numEpochs, numSimulationsPerQuery);
+    // await trainModel('hard', runningMomentsYHard, numEpochs, numSimulationsPerQuery)
 });
 async function trainModel(difficulty, momentsY, nEpoch, nSimPerQuery) {
     let cleanedQueriesEasy = trainer.queriesEasy.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
     let cleanedQueriesMedium = trainer.queriesMedium.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
     let cleanedQueriesHard = trainer.queriesHard.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesEasyVal = trainer.queriesEasyVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesMediumVal = trainer.queriesMediumVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
-    let cleanedQueriesHardVal = trainer.queriesHardVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    // let cleanedQueriesEasyVal: string[][] = trainer.queriesEasyVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    // let cleanedQueriesMediumVal: string[][] = trainer.queriesMediumVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    // let cleanedQueriesHardVal: string[][] = trainer.queriesHardVal.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
+    let cleanedQueriesVal = trainer.valQueries.map(x => x.replace(/\n/g, '').replace(/\t/g, '').split('SELECT').slice(1));
     let trainQueries = [[]];
-    let valQueries = [[]];
     if (difficulty == 'easy') {
         trainQueries = [...cleanedQueriesEasy];
-        valQueries = [...cleanedQueriesEasyVal];
     }
     if (difficulty == 'medium') {
         trainQueries = [...cleanedQueriesEasy, ...cleanedQueriesMedium];
-        valQueries = [...cleanedQueriesEasyVal, ...cleanedQueriesMediumVal];
     }
     if (difficulty == 'hard') {
         trainQueries = [...cleanedQueriesEasy, ...cleanedQueriesMedium, ...cleanedQueriesHard];
-        valQueries = [...cleanedQueriesEasyVal, ...cleanedQueriesMediumVal, ...cleanedQueriesHardVal];
     }
-    const trainLoss = await trainLoop(trainQueries, valQueries, momentsY, nEpoch, nSimPerQuery, difficulty);
+    const trainLoss = await trainLoop(trainQueries, cleanedQueriesVal, momentsY, nEpoch, nSimPerQuery, difficulty);
     return trainLoss;
 }
 async function trainLoop(trainQueries, valQueries, momentsY, nEpoch, nSimPerQuery, difficulty) {
@@ -192,10 +211,13 @@ async function trainLoop(trainQueries, valQueries, momentsY, nEpoch, nSimPerQuer
     const valExecutionTime = [];
     const trainLoss = [];
     const lossTrain = [];
+    const mapResultsTemp = new Map();
+    const bindingsStream = await trainer.executeQuery('SELECT' + trainQueries[0][0], ["output/dataset.nt"], mapResultsTemp, true);
+    trainer.resetMasterTree();
+    console.log(`We train ${nEpoch} epochs, perform ${nSimPerQuery} query sims and train on ${trainQueries.length} query types`);
     for (let epoch = 0; epoch < nEpoch; epoch++) {
         const lossQuery = [];
         for (let i = 0; i < trainQueries.length; i++) {
-            // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
             const querySubset = [...trainQueries[i]];
             for (let j = 0; j < querySubset.length; j++) {
                 /* Execute n queries and record the results */
@@ -223,10 +245,10 @@ async function trainLoop(trainQueries, valQueries, momentsY, nEpoch, nSimPerQuer
                 }
             }
         }
-        trainer.saveModel('epoch' + epoch + difficulty);
+        trainer.saveModel('WatDivEpoch' + epoch + difficulty, trainer.masterTree.runningMoments, momentsY);
         lossTrain.push(sum(lossQuery) / lossQuery.length);
         console.log(`Epoch ${epoch}, Loss: ${lossTrain[epoch]}`);
-        const valMetrics = await validationLoop(valQueries, momentsY, 5);
+        const valMetrics = await validationLoop(valQueries, momentsY, 6);
         console.log(`Epoch ${epoch}, Val Loss ${valMetrics[0]}, Val MSE ${valMetrics[1]}, Val Execution Time ${valMetrics[2]}`);
         valLoss.push(valMetrics[0]);
         valMSE.push(valMetrics[1]);
@@ -244,7 +266,6 @@ async function validationLoop(validationQueries, momentsY, numSimulationsVal) {
     const actualExecutionTimeValidation = [];
     const MSEValidation = [];
     for (let i = 0; i < validationQueries.length; i++) {
-        // console.log(`cleanedQueries ${i+1}/${cleanedQueries.length}`);
         const querySubset = [...validationQueries[i]];
         for (let j = 0; j < querySubset.length; j++) {
             /* Execute query and record the results */
@@ -274,10 +295,10 @@ async function validationLoop(validationQueries, momentsY, numSimulationsVal) {
                 totalMSE += validationResults[1];
                 totalExecutionTime += unNormExecutionTime[0];
             }
-            lossValidation.push(totalLoss / numSimulationsPerQuery);
-            MSEValidation.push(totalMSE / numSimulationsPerQuery);
+            lossValidation.push(totalLoss / numSimulationsVal);
+            MSEValidation.push(totalMSE / numSimulationsVal);
             // Use unnormalized execution times to compare
-            actualExecutionTimeValidation.push(totalExecutionTime / numSimulationsPerQuery);
+            actualExecutionTimeValidation.push(totalExecutionTime / numSimulationsVal);
         }
     }
     const averageValidationLoss = sum(lossValidation) / lossValidation.length;
@@ -306,6 +327,7 @@ function addEndListener(beginTime, planMap, masterMap, bindingStream, process, r
                 // console.log(`Entry Number:${numEntriesPassed}`)
             });
             bindingStream.on('end', () => {
+                // console.log(`Query Gives ${numEntriesPassed} Entries`)
                 const end = process.hrtime();
                 const endSeconds = end[0] + end[1] / 1000000000;
                 const elapsed = endSeconds - beginTime;
